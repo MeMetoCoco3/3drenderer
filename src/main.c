@@ -67,6 +67,36 @@ void draw_grid(void) {
   }
 }
 
+/* FROM EXERCICE DRAWING A RECTANGLE*/
+void draw_rectangle_lines(int vx, int vy, int width, int height,
+                          uint32_t color) {
+  for (int x = vx; x < width + vx; x++) {
+    color_buffer[x + window_width * vy] = color;
+    color_buffer[x + window_width * (vy + height)] = color;
+  }
+  for (int y = vy; y < height + vy; y++) {
+    color_buffer[y * window_width + vx] = color;
+    color_buffer[y * window_width + (vx + width)] = color;
+  }
+}
+
+void draw_rectangle(int vx, int vy, int width, int height, uint32_t color) {
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      int current_x = x + vx;
+      int current_y = y + vy;
+      if (current_x >= window_width) {
+        current_x = window_width - 1;
+      }
+
+      if (current_y >= window_height) {
+        current_y = window_height - 1;
+      }
+      color_buffer[current_y * window_width + current_x] = color;
+    }
+  }
+}
+
 void get_input(void) {
   SDL_Event event;
   SDL_PollEvent(&event);
@@ -104,7 +134,8 @@ void render(void) {
   SDL_RenderClear(renderer);
   render_color_buffer();
   clear_color_buffer(0xFFFFFF00);
-  draw_grid();
+  draw_rectangle_lines(100, 100, 100, 100, 0x0F00FF00);
+  /* draw_grid(); */
   // Sends backbuffer to Window.
   SDL_RenderPresent(renderer);
 }
