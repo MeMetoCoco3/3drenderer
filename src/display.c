@@ -41,6 +41,12 @@ bool init_window(void) {
   return true;
 }
 
+void draw_pixel(int x, int y, uint32_t color) {
+  if (x < window_width && x >= 0 && y < window_height && y >= 0) {
+    color_buffer[x + y * window_width] = color;
+  }
+}
+
 /* FROM EXERCICE DRAWING A BACKGROUND GRID*/
 void draw_grid(void) {
   for (int y = 0; y < window_height; y++) {
@@ -70,14 +76,8 @@ void draw_rectangle(int vx, int vy, int width, int height, uint32_t color) {
     for (int x = 0; x < width; x++) {
       int current_x = x + vx;
       int current_y = y + vy;
-      if (current_x >= window_width) {
-        current_x = window_width - 1;
-      }
-
-      if (current_y >= window_height) {
-        current_y = window_height - 1;
-      }
-      color_buffer[current_y * window_width + current_x] = color;
+      draw_pixel(current_x, current_y, color);
+      /* color_buffer[current_y * window_width + current_x] = color; */
     }
   }
 }

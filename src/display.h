@@ -23,7 +23,7 @@ void render(void);
 void destroy_window(void);
 void clear_color_buffer(uint32_t color);
 
-/*Exercices*/
+void draw_pixel(int x, int y, uint32_t color);
 void draw_rectangle_lines(int vx, int vy, int width, int height,
                           uint32_t color);
 void draw_grid(void);

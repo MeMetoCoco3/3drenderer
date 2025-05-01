@@ -1,100 +1,45 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_keycode.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
+#include "display.h"
+#include "vector.h"
 
 bool is_running;
+#define N_POINTS (9 * 9 * 9)
 
-SDL_Window *window;
-SDL_Renderer *renderer;
+vec3_t cube_points[N_POINTS];
+vec2_t transformed_points[N_POINTS];
 
-uint32_t *color_buffer;
-SDL_Texture *color_buffer_texture;
+int main(void) {
 
-int window_height = 600;
-int window_width = 800;
+  printf("BEFORE");
+  is_running = init_window();
 
-bool init_window(void) {
-  if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-
-    fprintf(stderr, "Error initializing SDL.\n");
-    return false;
+  setup();
+  while (is_running) {
+    get_input();
+    update();
+    render();
   }
-
-  // Query SDL to know size of display.
-  SDL_DisplayMode display_mode;
-  SDL_GetCurrentDisplayMode(0, &display_mode);
-  window_height = display_mode.h;
-  window_width = display_mode.w;
-
-  window =
-      SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                       window_width, window_height, SDL_WINDOW_BORDERLESS);
-  if (!window) {
-    fprintf(stderr, "Error initializing Window.\n");
-    return false;
-  }
-  // El segundo argumento define el device context, si es -1, pilla el primero
-  // que pueda.
-  renderer = SDL_CreateRenderer(window, -1, 0);
-  if (!renderer) {
-    fprintf(stderr, "Error initializing Renderer.\n");
-    return false;
-  }
-  // Set Fullscreen.
-  SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
-  return true;
+  destroy_window();
+  return 0;
 }
 
 void setup(void) {
+  // Create color buffer
   color_buffer =
       (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
+  // Create texture that will hold color buffer.
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
-}
-/* FROM EXERCICE DRAWING A BACKGROUND GRID*/
-void draw_grid(void) {
-  for (int y = 0; y < window_height; y++) {
-    for (int x = 0; x < window_width; x++)
-      if (y % 10 == 0 || x % 10 == 0) {
-        color_buffer[y * window_width + x] = 0xFF000000;
+  int point_counter = 0;
+  for (float x = -1; x <= 1; x += 0.25) {
+    for (float y = -1; y <= 1; y += 0.25) {
+      for (float z = -1; z <= 1; z += 0.25) {
+        vec3_t new_vector = {.x = x, .y = y, .z = z};
+        cube_points[point_counter++] = new_vector;
       }
-  }
-}
-
-/* FROM EXERCICE DRAWING A RECTANGLE*/
-void draw_rectangle_lines(int vx, int vy, int width, int height,
-                          uint32_t color) {
-  for (int x = vx; x < width + vx; x++) {
-    color_buffer[x + window_width * vy] = color;
-    color_buffer[x + window_width * (vy + height)] = color;
-  }
-  for (int y = vy; y < height + vy; y++) {
-    color_buffer[y * window_width + vx] = color;
-    color_buffer[y * window_width + (vx + width)] = color;
-  }
-}
-
-void draw_rectangle(int vx, int vy, int width, int height, uint32_t color) {
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      int current_x = x + vx;
-      int current_y = y + vy;
-      if (current_x >= window_width) {
-        current_x = window_width - 1;
-      }
-
-      if (current_y >= window_height) {
-        current_y = window_height - 1;
-      }
-      color_buffer[current_y * window_width + current_x] = color;
     }
   }
+  printf("$$$%d.\n", point_counter);
 }
 
 void get_input(void) {
@@ -111,57 +56,35 @@ void get_input(void) {
     break;
   }
 }
-void update(void) {}
+void update(void) {
 
-void render_color_buffer(void) {
-  // Updates texture with the values from color buffer.
-  SDL_UpdateTexture(color_buffer_texture, NULL, color_buffer,
-                    (int)sizeof(uint32_t) * window_width);
-  // Renders texture on device.
-  SDL_RenderCopy(renderer, color_buffer_texture, NULL, NULL);
-}
-void clear_color_buffer(uint32_t color) {
-  for (int y = 0; y < window_height; y++) {
-    for (int x = 0; x < window_width; x++)
-      color_buffer[y * window_width + x] = color;
+  int point_counter = 0;
+  for (int i = 0; i < N_POINTS; i++) {
+    vec2_t transformed_point = project(cube_points[i]);
+    transformed_points[i] = transformed_point;
+    point_counter++;
   }
+
+  printf("$$$%d.\n", point_counter);
 }
 
 void render(void) {
   // Sets a color.
-  SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255);
+  /* SDL_SetRenderDrawColor(renderer, 200, 0, 0, 255); */
   // Draws that color on backbuffer.
-  SDL_RenderClear(renderer);
-  render_color_buffer();
-  clear_color_buffer(0xFFFFFF00);
-  draw_rectangle_lines(100, 100, 100, 100, 0x0F00FF00);
+  /* SDL_RenderClear(renderer); */
+  /* draw_rectangle(100, 100, 100, 100, 0xFFFFF000); */
   /* draw_grid(); */
+  /* draw_pixel(150, 150, 0xFFFF0000); */
+
+  for (int i = 0; i < N_POINTS; i++) {
+    vec2_t point = transformed_points[i];
+    draw_rectangle(point.x, point.y, 4, 4, 0xFF0000FF);
+  }
+
+  printf("AFTER");
+  render_color_buffer();
+  clear_color_buffer(0xFF0FFF00);
   // Sends backbuffer to Window.
   SDL_RenderPresent(renderer);
-}
-
-void destroy_window(void) {
-  free(color_buffer);
-  printf("Color buffer freed.\n");
-
-  SDL_DestroyRenderer(renderer);
-  printf("Renderer freed.\n");
-
-  SDL_DestroyWindow(window);
-  printf("Window freed.\n");
-
-  SDL_Quit();
-  printf("SDL QUIT.\n");
-}
-
-int main(void) {
-  is_running = init_window();
-  setup();
-  while (is_running) {
-    get_input();
-    update();
-    render();
-  }
-  destroy_window();
-  return 0;
 }
