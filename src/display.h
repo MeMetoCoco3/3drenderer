@@ -26,6 +26,7 @@ void clear_color_buffer(uint32_t color);
 void draw_pixel(int x, int y, uint32_t color);
 void draw_rectangle_lines(int vx, int vy, int width, int height,
                           uint32_t color);
-void draw_grid(void);
+void draw_grid(uint32_t);
+void draw_grid_points(uint32_t);
 void draw_rectangle(int vx, int vy, int width, int height, uint32_t color);
 #endif

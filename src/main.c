@@ -58,9 +58,21 @@ void get_input(void) {
 }
 void update(void) {
 
+  cube_rotation.y += 0.01f;
+  cube_rotation.x += 0.1f;
+
   int point_counter = 0;
   for (int i = 0; i < N_POINTS; i++) {
-    vec2_t transformed_point = project(cube_points[i]);
+    vec3_t point = cube_points[i];
+
+    vec3_t rotated_point = vec3_rotate_y(point, cube_rotation.y);
+    rotated_point = vec3_rotate_x(rotated_point, cube_rotation.x);
+
+    rotated_point.z -= camera_position.z;
+
+    vec2_t transformed_point = project(rotated_point);
+    transformed_point.x += window_width / 2.0f;
+    transformed_point.y += window_height / 2.0f;
     transformed_points[i] = transformed_point;
     point_counter++;
   }
@@ -74,17 +86,21 @@ void render(void) {
   // Draws that color on backbuffer.
   /* SDL_RenderClear(renderer); */
   /* draw_rectangle(100, 100, 100, 100, 0xFFFFF000); */
-  /* draw_grid(); */
   /* draw_pixel(150, 150, 0xFFFF0000); */
 
   for (int i = 0; i < N_POINTS; i++) {
+    // Colours based on depth.
+    /* int z_value = (cube_points[i].z + 1.0f) * 100; */
+    /* uint32_t color = (255 << 24) | (z_value << 16) | (z_value << 8) | 255; */
+
     vec2_t point = transformed_points[i];
-    draw_rectangle(point.x, point.y, 4, 4, 0xFF0000FF);
+    draw_rectangle(point.x, point.y, 4, 4, 0x000000FF);
   }
 
+  draw_grid_points(0x00222222);
   printf("AFTER");
   render_color_buffer();
-  clear_color_buffer(0xFF0FFF00);
+  clear_color_buffer(0xFF000000);
   // Sends backbuffer to Window.
   SDL_RenderPresent(renderer);
 }
