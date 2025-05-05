@@ -3,7 +3,6 @@
 
 float fov_factor = 640;
 vec3_t camera_position = {.x = 0, .y = 0, .z = -5};
-vec3_t cube_rotation = {.x = 0, .y = 0, .z = 0};
 
 /* vec2_t project(vec3_t point) { */
 /*   vec2_t point_2d = {.x = point.x * fov_factor, .y = point.y * fov_factor};

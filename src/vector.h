@@ -14,7 +14,6 @@ typedef struct {
 
 extern float fov_factor;
 extern vec3_t camera_position;
-extern vec3_t cube_rotation;
 
 vec3_t vec3_rotate_x(vec3_t v, float angle);
 vec3_t vec3_rotate_y(vec3_t v, float angle);
