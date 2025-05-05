@@ -1,12 +1,13 @@
+#include "colors.h"
 #include "display.h"
+#include "mesh.h"
+#include "triangle.h"
 #include "vector.h"
 
 bool is_running;
 int previous_frame_time = 0;
 
-#define N_POINTS (9 * 9 * 9)
-vec3_t cube_points[N_POINTS];
-vec2_t transformed_points[N_POINTS];
+triangle_t triangles_to_render[N_MESH_FACES];
 
 int main(void) {
   is_running = init_window();
@@ -30,16 +31,15 @@ void setup(void) {
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
-  int point_counter = 0;
-  for (float x = -1; x <= 1; x += 0.25) {
-    for (float y = -1; y <= 1; y += 0.25) {
-      for (float z = -1; z <= 1; z += 0.25) {
-        vec3_t new_vector = {.x = x, .y = y, .z = z};
-        cube_points[point_counter++] = new_vector;
-      }
-    }
-  }
-  printf("$$$%d.\n", point_counter);
+  // for (float x = -1; x <= 1; x += 0.25) {
+  //   for (float y = -1; y <= 1; y += 0.25) {
+  //     for (float z = -1; z <= 1; z += 0.25) {
+  //       vec3_t new_vector = {.x = x, .y = y, .z = z};
+  //       cube_points[point_counter++] = new_vector;
+  //     }
+  //   }
+  // }
+  // printf("$$$%d.\n", point_counter);
 }
 
 void get_input(void) {
@@ -64,22 +64,37 @@ void update(void) {
   }
   previous_frame_time = SDL_GetTicks();
 
-  cube_rotation.y += 0.001f;
-  cube_rotation.x += 0.01f;
+  cube_rotation.x += 0.02f;
+  cube_rotation.y += 0.02f;
+  cube_rotation.z += 0.05f;
+  for (int i = 0; i < N_MESH_FACES; i++) {
+    face_t face = mesh_faces[i];
+    vec3_t face_vertices[3];
+    face_vertices[0] = mesh_vertices[face.a - 1];
+    face_vertices[1] = mesh_vertices[face.b - 1];
+    face_vertices[2] = mesh_vertices[face.c - 1];
 
-  for (int i = 0; i < N_POINTS; i++) {
-    vec3_t point = cube_points[i];
+    triangle_t projected_triangle;
 
-    vec3_t rotated_point = vec3_rotate_y(point, cube_rotation.y);
-    rotated_point = vec3_rotate_x(rotated_point, cube_rotation.x);
+    for (int j = 0; j < 3; j++) {
+      vec3_t transformed_vertex = face_vertices[j];
 
-    rotated_point.z -= camera_position.z;
+      transformed_vertex = vec3_rotate_x(transformed_vertex, cube_rotation.x);
+      transformed_vertex = vec3_rotate_y(transformed_vertex, cube_rotation.y);
+      transformed_vertex = vec3_rotate_z(transformed_vertex, cube_rotation.z);
 
-    vec2_t transformed_point = project(rotated_point);
-    transformed_point.x += window_width / 2.0f;
-    transformed_point.y += window_height / 2.0f;
-    transformed_points[i] = transformed_point;
+      transformed_vertex.z -= camera_position.z;
+      printf("%f\n", transformed_vertex.z);
+      vec2_t projected_point = project(transformed_vertex);
+
+      projected_point.x += (window_width / 2);
+      projected_point.y += (window_height / 2);
+
+      projected_triangle.points[j] = projected_point;
+    }
+    triangles_to_render[i] = projected_triangle;
   }
+  printf("%f\n", triangles_to_render[0].points[0].x);
 }
 
 void render(void) {
@@ -90,18 +105,18 @@ void render(void) {
   /* draw_rectangle(100, 100, 100, 100, 0xFFFFF000); */
   /* draw_pixel(150, 150, 0xFFFF0000); */
 
-  for (int i = 0; i < N_POINTS; i++) {
-    // Colours based on depth.
-    /* int z_value = (cube_points[i].z + 1.0f) * 100; */
-    /* uint32_t color = (255 << 24) | (z_value << 16) | (z_value << 8) | 255; */
+  draw_grid_points(C_GUNMETAL);
 
-    vec2_t point = transformed_points[i];
-    draw_rectangle(point.x, point.y, 4, 4, 0x000000FF);
+  for (int i = 0; i < N_MESH_FACES; i++) {
+    triangle_t triangle = triangles_to_render[i];
+    draw_triangle(triangle, C_ORANGE);
+    // draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_BLUE);
+    // draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_BLUE);
+    // draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_BLUE);
   }
 
-  draw_grid_points(0xFF000000);
   render_color_buffer();
-  clear_color_buffer(0xFFFFFFFF);
+  clear_color_buffer(C_BLACK);
   // Sends backbuffer to Window.
   SDL_RenderPresent(renderer);
 }

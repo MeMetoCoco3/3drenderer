@@ -1,0 +1,11 @@
+#ifndef COLORS_H
+#define COLORS_H
+
+#define C_RED 0xFFF71735
+#define C_GREEN 0xFF00FF00
+#define C_BLUE 0xFF0000FF
+#define C_WHITE 0xFFFDFFFC
+#define C_BLACK 0xFF000000
+#define C_ORANGE 0xFFFF9F1C
+#define C_GUNMETAL 0xFF132E32
+#endif

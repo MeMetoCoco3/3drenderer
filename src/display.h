@@ -1,6 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
+#include "triangle.h"
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -29,6 +30,8 @@ void destroy_window(void);
 void clear_color_buffer(uint32_t color);
 
 void draw_pixel(int x, int y, uint32_t color);
+void draw_line(int x0, int x1, int y0, int y1, u_int32_t color);
+void draw_triangle(triangle_t triangle, u_int32_t color);
 void draw_rectangle_lines(int vx, int vy, int width, int height,
                           uint32_t color);
 void draw_grid(uint32_t);
