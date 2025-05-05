@@ -21,6 +21,7 @@ int main(void) {
     render();
   }
   destroy_window();
+  free_resources();
   return 0;
 }
 
@@ -116,9 +117,9 @@ void render(void) {
   for (int i = 0; i < num_triangles; i++) {
     triangle_t triangle = triangles_to_render[i];
     draw_triangle(triangle, C_ORANGE);
-    // draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_BLUE);
-    // draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_BLUE);
-    // draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_BLUE);
+    draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_RED);
+    draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_RED);
+    draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_RED);
   }
 
   array_free(triangles_to_render);

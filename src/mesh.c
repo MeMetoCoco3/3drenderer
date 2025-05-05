@@ -15,6 +15,12 @@ void load_cube_mesh_data(void) {
   }
 }
 
+void free_resources(void) {
+  free(color_buffer);
+  array_free(mesh.faces);
+  array_free(mesh.vertices);
+}
+
 vec3_t cube_vertices[N_CUBE_VERTICES] = {
     {.x = -1, .y = -1, .z = -1}, // 1
     {.x = -1, .y = 1, .z = -1},  // 2

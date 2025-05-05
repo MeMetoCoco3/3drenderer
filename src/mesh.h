@@ -2,6 +2,7 @@
 #define MESH_H
 
 #include "array.h"
+#include "display.h"
 #include "stddef.h"
 #include "triangle.h"
 #include "vector.h"
@@ -11,8 +12,9 @@ typedef struct {
   vec3_t rotation;
 } mesh_t;
 
-void load_cube_mesh_data(void);
 extern mesh_t mesh;
+void load_cube_mesh_data(void);
+void free_resources(void);
 
 #define N_CUBE_VERTICES 8
 extern vec3_t cube_vertices[N_CUBE_VERTICES];
