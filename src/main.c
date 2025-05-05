@@ -2,17 +2,17 @@
 #include "vector.h"
 
 bool is_running;
-#define N_POINTS (9 * 9 * 9)
+int previous_frame_time = 0;
 
+#define N_POINTS (9 * 9 * 9)
 vec3_t cube_points[N_POINTS];
 vec2_t transformed_points[N_POINTS];
 
 int main(void) {
-
-  printf("BEFORE");
   is_running = init_window();
 
   setup();
+
   while (is_running) {
     get_input();
     update();
@@ -57,11 +57,16 @@ void get_input(void) {
   }
 }
 void update(void) {
+  // Deltatime
+  int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
+  if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
+    SDL_Delay(time_to_wait);
+  }
+  previous_frame_time = SDL_GetTicks();
 
-  cube_rotation.y += 0.01f;
-  cube_rotation.x += 0.1f;
+  cube_rotation.y += 0.001f;
+  cube_rotation.x += 0.01f;
 
-  int point_counter = 0;
   for (int i = 0; i < N_POINTS; i++) {
     vec3_t point = cube_points[i];
 
@@ -74,10 +79,7 @@ void update(void) {
     transformed_point.x += window_width / 2.0f;
     transformed_point.y += window_height / 2.0f;
     transformed_points[i] = transformed_point;
-    point_counter++;
   }
-
-  printf("$$$%d.\n", point_counter);
 }
 
 void render(void) {
@@ -97,10 +99,9 @@ void render(void) {
     draw_rectangle(point.x, point.y, 4, 4, 0x000000FF);
   }
 
-  draw_grid_points(0x00222222);
-  printf("AFTER");
+  draw_grid_points(0xFF000000);
   render_color_buffer();
-  clear_color_buffer(0xFF000000);
+  clear_color_buffer(0xFFFFFFFF);
   // Sends backbuffer to Window.
   SDL_RenderPresent(renderer);
 }

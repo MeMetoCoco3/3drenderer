@@ -53,15 +53,16 @@ void draw_grid(uint32_t color) {
   for (int y = 0; y < window_height; y++) {
     for (int x = 0; x < window_width; x++)
       if (y % 10 == 0 || x % 10 == 0) {
-        color_buffer[y * window_width + x] = color;
+        draw_pixel(x, y, color);
       }
   }
 }
 
 void draw_grid_points(uint32_t color) {
   for (int y = 0; y < window_height; y += 10) {
-    for (int x = 0; x < window_width; x += 10)
-      color_buffer[y * window_width + x] = color;
+    for (int x = 0; x < window_width; x += 10) {
+      draw_pixel(x, y, color);
+    }
   }
 }
 

@@ -5,6 +5,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define FPS 30
+// Frame target time es el numero de milisegundos que cada frame esta dibujado
+// en pantalla.
+#define FRAME_TARGET_TIME (1000 / FPS)
+
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
 
