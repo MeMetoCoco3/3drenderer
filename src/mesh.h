@@ -6,6 +6,11 @@
 #include "stddef.h"
 #include "triangle.h"
 #include "vector.h"
+#include <stdlib.h>
+#define MAX_LINE_LENGTH 1024
+
+enum OBJ_FILE_TOKENS { V, F };
+
 typedef struct {
   vec3_t *vertices;
   face_t *faces;
@@ -14,6 +19,7 @@ typedef struct {
 
 extern mesh_t mesh;
 void load_cube_mesh_data(void);
+void load_obj_file_data(char *);
 void free_resources(void);
 
 #define N_CUBE_VERTICES 8

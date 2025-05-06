@@ -33,16 +33,8 @@ void setup(void) {
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
-  load_cube_mesh_data();
-  // for (float x = -1; x <= 1; x += 0.25) {
-  //   for (float y = -1; y <= 1; y += 0.25) {
-  //     for (float z = -1; z <= 1; z += 0.25) {
-  //       vec3_t new_vector = {.x = x, .y = y, .z = z};
-  //       cube_points[point_counter++] = new_vector;
-  //     }
-  //   }
-  // }
-  // printf("$$$%d.\n", point_counter);
+  load_obj_file_data("./assets/f22.obj");
+  // load_cube_mesh_data();
 }
 
 void get_input(void) {
