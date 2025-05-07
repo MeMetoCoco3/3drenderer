@@ -2,13 +2,64 @@
 #include <math.h>
 
 float fov_factor = 640;
-vec3_t camera_position = {.x = 0, .y = 0, .z = -5};
+int depth = -5;
+vec3_t camera_position = {.x = 0, .y = 0, .z = 0};
 
-/* vec2_t project(vec3_t point) { */
-/*   vec2_t point_2d = {.x = point.x * fov_factor, .y = point.y * fov_factor};
- */
-/*   return point_2d; */
-/* } */
+float vec2_length(vec2_t v) { return sqrt(v.x * v.x + v.y * v.y); }
+vec2_t vec2_add(vec2_t a, vec2_t b) {
+  vec2_t res = {a.x + b.x, a.y + b.y};
+  return res;
+}
+vec2_t vec2_sub(vec2_t a, vec2_t b) {
+  vec2_t res = {a.x - b.x, a.y - b.y};
+  return res;
+}
+
+vec2_t vec2_mul(vec2_t v, float factor) {
+  vec2_t res = {v.x * factor, v.y * factor};
+  return res;
+}
+
+vec2_t vec2_div(vec2_t v, float factor) {
+  vec2_t res = {v.x / factor, v.y / factor};
+  return res;
+}
+
+float vec2_dot(vec2_t a, vec2_t b) { return (a.x * b.x) + (a.y * b.y); }
+
+float vec3_length(vec3_t v) { return sqrt(v.x * v.x + v.y * v.y + v.z * v.z); }
+
+vec3_t vec3_add(vec3_t a, vec3_t b) {
+  vec3_t res = {a.x + b.x, a.y + b.y, a.z + b.z};
+  return res;
+}
+vec3_t vec3_sub(vec3_t a, vec3_t b) {
+  vec3_t res = {a.x - b.x, a.y - b.y, a.z - b.z};
+  return res;
+}
+
+vec3_t vec3_mul(vec3_t v, float factor) {
+  vec3_t res = {v.x * factor, v.y * factor, v.z * factor};
+  return res;
+}
+
+vec3_t vec3_div(vec3_t v, float factor) {
+  vec3_t res = {v.x / factor, v.y / factor, v.z / factor};
+  return res;
+}
+
+vec3_t vec3_cross(vec3_t a, vec3_t b) {
+  vec3_t res = {
+      .x = a.y * b.z - a.z * b.y,
+      .y = a.z * b.x - a.x * b.z,
+      .z = a.x * b.y - a.y * b.x,
+  };
+  return res;
+}
+
+float vec3_dot(vec3_t a, vec3_t b) {
+  return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+}
 
 vec3_t vec3_rotate_x(vec3_t v, float angle) {
   vec3_t new_vector = {.x = v.x,
@@ -35,3 +86,9 @@ vec2_t project(vec3_t point) {
                      .y = (point.y * fov_factor) / point.z};
   return point_2d;
 }
+
+/* vec2_t project(vec3_t point) { */
+/*   vec2_t point_2d = {.x = point.x * fov_factor, .y = point.y * fov_factor};
+ */
+/*   return point_2d; */
+/* } */

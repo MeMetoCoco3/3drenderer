@@ -33,7 +33,7 @@ void setup(void) {
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
-  load_obj_file_data("./assets/f22.obj");
+  load_obj_file_data("./assets/pig.obj");
   // load_cube_mesh_data();
 }
 
@@ -75,6 +75,9 @@ void update(void) {
 
     triangle_t projected_triangle;
 
+    vec3_t transformed_vertices[3];
+
+    // Transformation
     for (int j = 0; j < 3; j++) {
       vec3_t transformed_vertex = face_vertices[j];
 
@@ -82,9 +85,30 @@ void update(void) {
       transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
       transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
 
-      transformed_vertex.z -= camera_position.z;
-      printf("%f\n", transformed_vertex.z);
-      vec2_t projected_point = project(transformed_vertex);
+      transformed_vertex.z += depth;
+      transformed_vertices[j] = transformed_vertex;
+    }
+    // Backface culling
+    vec3_t vector_a = transformed_vertices[0];
+    vec3_t vector_b = transformed_vertices[1];
+    vec3_t vector_c = transformed_vertices[2];
+
+    vec3_t vector_ba = vec3_sub(vector_b, vector_a);
+    vec3_t vector_ca = vec3_sub(vector_c, vector_a);
+
+    vec3_t normal = vec3_cross(vector_ba, vector_ca);
+
+    vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+
+    float angle = vec3_dot(normal, camera_ray);
+
+    if (angle < 0.0) {
+      continue;
+    }
+
+    // Projection
+    for (int j = 0; j < 3; j++) {
+      vec2_t projected_point = project(transformed_vertices[j]);
 
       projected_point.x += (window_width / 2);
       projected_point.y += (window_height / 2);
