@@ -33,7 +33,7 @@ void setup(void) {
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
-  load_obj_file_data("./assets/pig.obj");
+  load_obj_file_data("./assets/cube.obj");
   // load_cube_mesh_data();
 }
 
@@ -61,9 +61,9 @@ void update(void) {
 
   triangles_to_render = NULL;
 
-  mesh.rotation.x += 0.02f;
-  mesh.rotation.y += 0.02f;
-  mesh.rotation.z += 0.05f;
+  mesh.rotation.x += 0.01f;
+  mesh.rotation.y += 0.01f;
+  mesh.rotation.z += 0.02f;
 
   int num_faces = array_length(mesh.faces);
   for (int i = 0; i < num_faces; i++) {
@@ -88,6 +88,7 @@ void update(void) {
       transformed_vertex.z += depth;
       transformed_vertices[j] = transformed_vertex;
     }
+
     // Backface culling
     vec3_t vector_a = transformed_vertices[0];
     vec3_t vector_b = transformed_vertices[1];
@@ -95,8 +96,11 @@ void update(void) {
 
     vec3_t vector_ba = vec3_sub(vector_b, vector_a);
     vec3_t vector_ca = vec3_sub(vector_c, vector_a);
+    vec3_normalize(&vector_ba);
+    vec3_normalize(&vector_ba);
 
     vec3_t normal = vec3_cross(vector_ba, vector_ca);
+    vec3_normalize(&normal);
 
     vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
@@ -129,14 +133,15 @@ void render(void) {
 
   draw_grid_points(C_GUNMETAL);
 
-  int num_triangles = array_length(triangles_to_render);
-  for (int i = 0; i < num_triangles; i++) {
-    triangle_t triangle = triangles_to_render[i];
-    draw_triangle(triangle, C_ORANGE);
-    draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_RED);
-    draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_RED);
-    draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_RED);
-  }
+  // int num_triangles = array_length(triangles_to_render);
+  // for (int i = 0; i < num_triangles; i++) {
+  //   triangle_t triangle = triangles_to_render[i];
+  //   draw_triangle(triangle, C_ORANGE);
+  //   draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_RED);
+  //   draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_RED);
+  //   draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_RED);
+  // }
+  draw_filled_triangle(300, 100, 50, 400, 500, 700, C_ORANGE);
 
   array_free(triangles_to_render);
 
