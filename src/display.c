@@ -69,11 +69,11 @@ void draw_line(int x0, int y0, int x1, int y1, u_int32_t color) {
 }
 
 void draw_triangle(triangle_t triangle, u_int32_t color) {
-  draw_line(triangle.points[0].x, triangle.points[1].x, triangle.points[0].y,
+  draw_line(triangle.points[0].x, triangle.points[0].y, triangle.points[1].x,
             triangle.points[1].y, color);
-  draw_line(triangle.points[1].x, triangle.points[2].x, triangle.points[1].y,
+  draw_line(triangle.points[1].x, triangle.points[1].y, triangle.points[2].x,
             triangle.points[2].y, color);
-  draw_line(triangle.points[2].x, triangle.points[0].x, triangle.points[2].y,
+  draw_line(triangle.points[2].x, triangle.points[2].y, triangle.points[0].x,
             triangle.points[0].y, color);
 }
 

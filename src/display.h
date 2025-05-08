@@ -11,6 +11,20 @@
 // en pantalla.
 #define FRAME_TARGET_TIME (1000 / FPS)
 
+enum RENDERING_MODES {
+  RM_WIREFRAME,
+  RM_WIREFRAME_LINES,
+  RM_COLORED,
+  RM_COLORED_LINES
+};
+
+enum BACKFACE_CULLING { BACKFACE_CULLING_ON, BACKFACE_CULLING_OF };
+
+typedef struct {
+  enum RENDERING_MODES rm;
+  enum BACKFACE_CULLING bc;
+} rendering_data_t;
+
 extern SDL_Window *window;
 extern SDL_Renderer *renderer;
 

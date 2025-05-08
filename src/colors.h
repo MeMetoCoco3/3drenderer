@@ -8,4 +8,5 @@
 #define C_BLACK 0xFF000000
 #define C_ORANGE 0xFFFF9F1C
 #define C_GUNMETAL 0xFF132E32
+#define C_MAGNOLIA 0xFFE4DEE4
 #endif

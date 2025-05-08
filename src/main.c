@@ -10,6 +10,8 @@ int previous_frame_time = 0;
 
 triangle_t *triangles_to_render = NULL;
 
+rendering_data_t rendering_data;
+
 int main(void) {
   is_running = init_window();
 
@@ -26,6 +28,9 @@ int main(void) {
 }
 
 void setup(void) {
+
+  rendering_data.rm = RM_WIREFRAME;
+  rendering_data.bc = BACKFACE_CULLING_ON;
   // Create color buffer
   color_buffer =
       (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
@@ -33,7 +38,7 @@ void setup(void) {
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
-  load_obj_file_data("./assets/f22.obj");
+  load_obj_file_data("./assets/cube.obj");
   // load_cube_mesh_data();
 }
 
@@ -47,6 +52,24 @@ void get_input(void) {
   case SDL_KEYDOWN:
     if (event.key.keysym.sym == SDLK_ESCAPE) {
       is_running = false;
+    }
+    if (event.key.keysym.sym == SDLK_KP_1) {
+      rendering_data.rm = RM_WIREFRAME;
+    }
+    if (event.key.keysym.sym == SDLK_KP_2) {
+      rendering_data.rm = RM_WIREFRAME_LINES;
+    }
+    if (event.key.keysym.sym == SDLK_KP_3) {
+      rendering_data.rm = RM_COLORED;
+    }
+    if (event.key.keysym.sym == SDLK_KP_4) {
+      rendering_data.rm = RM_COLORED_LINES;
+    }
+    if (event.key.keysym.sym == SDLK_c) {
+      rendering_data.bc = BACKFACE_CULLING_ON;
+    }
+    if (event.key.keysym.sym == SDLK_d) {
+      rendering_data.bc = BACKFACE_CULLING_OF;
     }
     break;
   }
@@ -90,26 +113,27 @@ void update(void) {
     }
 
     // Backface culling
-    vec3_t vector_a = transformed_vertices[0];
-    vec3_t vector_b = transformed_vertices[1];
-    vec3_t vector_c = transformed_vertices[2];
+    if (rendering_data.bc == BACKFACE_CULLING_ON) {
+      vec3_t vector_a = transformed_vertices[0];
+      vec3_t vector_b = transformed_vertices[1];
+      vec3_t vector_c = transformed_vertices[2];
 
-    vec3_t vector_ba = vec3_sub(vector_b, vector_a);
-    vec3_t vector_ca = vec3_sub(vector_c, vector_a);
-    vec3_normalize(&vector_ba);
-    vec3_normalize(&vector_ba);
+      vec3_t vector_ba = vec3_sub(vector_b, vector_a);
+      vec3_t vector_ca = vec3_sub(vector_c, vector_a);
+      vec3_normalize(&vector_ba);
+      vec3_normalize(&vector_ba);
 
-    vec3_t normal = vec3_cross(vector_ba, vector_ca);
-    vec3_normalize(&normal);
+      vec3_t normal = vec3_cross(vector_ba, vector_ca);
+      vec3_normalize(&normal);
 
-    vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+      vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
-    float angle = vec3_dot(normal, camera_ray);
+      float angle = vec3_dot(normal, camera_ray);
 
-    if (angle < 0.0) {
-      continue;
+      if (angle < 0.0) {
+        continue;
+      }
     }
-
     // Projection
     for (int j = 0; j < 3; j++) {
       vec2_t projected_point = project(transformed_vertices[j]);
@@ -133,15 +157,27 @@ void render(void) {
 
   draw_grid_points(C_GUNMETAL);
 
-  // int num_triangles = array_length(triangles_to_render);
-  // for (int i = 0; i < num_triangles; i++) {
-  //   triangle_t triangle = triangles_to_render[i];
-  //   draw_triangle(triangle, C_ORANGE);
-  //   draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_RED);
-  //   draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_RED);
-  //   draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_RED);
-  // }
-  draw_filled_triangle(300, 100, 50, 400, 500, 700, C_ORANGE);
+  int num_triangles = array_length(triangles_to_render);
+  for (int i = 0; i < num_triangles; i++) {
+    triangle_t triangle = triangles_to_render[i];
+    if (rendering_data.rm == RM_COLORED ||
+        rendering_data.rm == RM_COLORED_LINES) {
+      draw_filled_triangle(triangle.points[0].x, triangle.points[0].y,
+                           triangle.points[1].x, triangle.points[1].y,
+                           triangle.points[2].x, triangle.points[2].y,
+                           C_ORANGE);
+    }
+    if (rendering_data.rm == RM_COLORED_LINES ||
+        rendering_data.rm == RM_WIREFRAME ||
+        rendering_data.rm == RM_WIREFRAME_LINES) {
+      draw_triangle(triangle, C_BLUE);
+    }
+    if (rendering_data.rm == RM_WIREFRAME) {
+      draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_RED);
+      draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_RED);
+      draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_RED);
+    }
+  }
 
   array_free(triangles_to_render);
 
