@@ -49,7 +49,7 @@ void draw_pixel(int x, int y, uint32_t color) {
 }
 
 // DDA ALGORITHM
-void draw_line(int x0, int x1, int y0, int y1, u_int32_t color) {
+void draw_line(int x0, int y0, int x1, int y1, u_int32_t color) {
   int delta_x = x1 - x0;
   int delta_y = y1 - y0;
 
