@@ -8,11 +8,15 @@ typedef struct {
   int a;
   int b;
   int c;
+
+  uint32_t color;
 } face_t;
 
 // Stores value of 3 vertex of a triangle, projected on a screen.
 typedef struct {
   vec2_t points[3];
+  uint32_t color;
+
 } triangle_t;
 
 void swap(int *a, int *b);

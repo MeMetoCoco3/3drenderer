@@ -38,8 +38,8 @@ void setup(void) {
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
-  load_obj_file_data("./assets/cube.obj");
-  // load_cube_mesh_data();
+  // load_obj_file_data("./assets/cube.obj");
+  load_cube_mesh_data();
 }
 
 void get_input(void) {
@@ -74,6 +74,7 @@ void get_input(void) {
     break;
   }
 }
+
 void update(void) {
   // Deltatime
   int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
@@ -97,7 +98,7 @@ void update(void) {
     face_vertices[2] = mesh.vertices[face.c - 1];
 
     triangle_t projected_triangle;
-
+    projected_triangle.color = mesh.faces[i].color;
     vec3_t transformed_vertices[3];
 
     // Transformation
@@ -143,6 +144,7 @@ void update(void) {
 
       projected_triangle.points[j] = projected_point;
     }
+
     array_push(triangles_to_render, projected_triangle);
   }
 }
@@ -162,10 +164,11 @@ void render(void) {
     triangle_t triangle = triangles_to_render[i];
     if (rendering_data.rm == RM_COLORED ||
         rendering_data.rm == RM_COLORED_LINES) {
+
       draw_filled_triangle(triangle.points[0].x, triangle.points[0].y,
                            triangle.points[1].x, triangle.points[1].y,
                            triangle.points[2].x, triangle.points[2].y,
-                           C_ORANGE);
+                           triangle.color);
     }
     if (rendering_data.rm == RM_COLORED_LINES ||
         rendering_data.rm == RM_WIREFRAME ||
