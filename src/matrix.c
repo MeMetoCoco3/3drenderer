@@ -80,3 +80,15 @@ vec4_t mat4_mul_vec4(mat4_t m, vec4_t v) {
 
   return result;
 }
+
+mat4_t mat4_mul_mat4(mat4_t a, mat4_t b) {
+  mat4_t m;
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 4; j++) {
+      m.values[i][j] =
+          a.values[i][0] * b.values[0][j] + a.values[i][1] * b.values[1][j] +
+          a.values[i][2] * b.values[2][j] + a.values[i][3] * b.values[3][j];
+    }
+  }
+  return m;
+}
