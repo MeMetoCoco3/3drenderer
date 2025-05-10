@@ -1,7 +1,7 @@
 #include "vector.h"
 #include <math.h>
 
-float fov_factor = 640;
+float fov_factor = 720;
 int depth = -5;
 vec3_t camera_position = {.x = 0, .y = 0, .z = 0};
 
@@ -28,7 +28,7 @@ vec2_t vec2_div(vec2_t v, float factor) {
 float vec2_dot(vec2_t a, vec2_t b) { return (a.x * b.x) + (a.y * b.y); }
 
 void vec2_normalize(vec2_t *v) {
-  float length = sqrt(v->x * v->x + v->y + v->y);
+  float length = sqrt(v->x * v->x + v->y * v->y);
   v->x /= length;
   v->y /= length;
 }
@@ -98,6 +98,15 @@ vec2_t project(vec3_t point) {
   vec2_t point_2d = {.x = (point.x * fov_factor) / point.z,
                      .y = (point.y * fov_factor) / point.z};
   return point_2d;
+}
+
+vec4_t vec4_from_vec3(vec3_t v) {
+  vec4_t v4 = {.x = v.x, .y = v.y, .z = v.z, .w = 1.0};
+  return v4;
+}
+vec3_t vec3_from_vec4(vec4_t v) {
+  vec3_t v3 = {.x = v.x, .y = v.y, .z = v.z};
+  return v3;
 }
 
 /* vec2_t project(vec3_t point) { */

@@ -1,10 +1,7 @@
 #include "triangle.h"
 #include "display.h"
-void swap(int *a, int *b) {
-  int tmp = *a;
-  *a = *b;
-  *b = tmp;
-}
+#include "sort.h"
+
 void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
                           uint32_t color) {
   if (y0 > y1) {

@@ -6,6 +6,8 @@ mesh_t mesh = {
     .vertices = NULL,
     .faces = NULL,
     .rotation = {0, 0, 0},
+    .scale = {1.0, 1.0, 1.0},
+    .translation = {0, 0, 0},
 };
 
 void load_cube_mesh_data(void) {
@@ -126,7 +128,8 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
     {.x = -1, .y = -1, .z = 1}   // 8
 };
 
-face_t cube_faces[N_CUBE_FACES] = { // front
+face_t cube_faces[N_CUBE_FACES] = {
+    // front
     {.a = 1, .b = 2, .c = 3, .color = 0xFFFF0000},
     {.a = 1, .b = 3, .c = 4, .color = 0xFFFF0000},
     // right
@@ -142,5 +145,5 @@ face_t cube_faces[N_CUBE_FACES] = { // front
     {.a = 2, .b = 7, .c = 5, .color = 0xFFFF00FF},
     {.a = 2, .b = 5, .c = 3, .color = 0xFFFF00FF},
     // bottom
-    {.a = 6, .b = 8, .c = 1, .color = 0xFFFFF0F0},
-    {.a = 6, .b = 1, .c = 4, .color = 0xFFFFF0F0}};
+    {.a = 6, .b = 8, .c = 1, .color = 0xFF00FFFF},
+    {.a = 6, .b = 1, .c = 4, .color = 0xFF00FFFF}};

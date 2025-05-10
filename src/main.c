@@ -1,10 +1,10 @@
 #include "array.h"
 #include "colors.h"
 #include "display.h"
+#include "matrix.h"
 #include "mesh.h"
 #include "triangle.h"
 #include "vector.h"
-
 bool is_running;
 int previous_frame_time = 0;
 
@@ -89,6 +89,20 @@ void update(void) {
   mesh.rotation.y += 0.01f;
   mesh.rotation.z += 0.02f;
 
+  // mesh.scale.x += 0.001f;
+  // mesh.scale.y += 0.001f;
+
+  mesh.translation.x += 0.01f;
+  mesh.translation.z = depth;
+
+  mat4_t scale_matrix =
+      mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+  mat4_t translation_matrix = mat4_make_translation(
+      mesh.translation.x, mesh.translation.y, mesh.translation.z);
+  mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
+  mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
+  mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+
   int num_faces = array_length(mesh.faces);
   for (int i = 0; i < num_faces; i++) {
     face_t face = mesh.faces[i];
@@ -97,32 +111,32 @@ void update(void) {
     face_vertices[1] = mesh.vertices[face.b - 1];
     face_vertices[2] = mesh.vertices[face.c - 1];
 
-    triangle_t projected_triangle;
-    projected_triangle.color = mesh.faces[i].color;
-    vec3_t transformed_vertices[3];
+    vec4_t transformed_vertices[3];
 
     // Transformation
     for (int j = 0; j < 3; j++) {
-      vec3_t transformed_vertex = face_vertices[j];
+      vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
+      transformed_vertex = mat4_mul_vec4(scale_matrix, transformed_vertex);
 
-      transformed_vertex = vec3_rotate_x(transformed_vertex, mesh.rotation.x);
-      transformed_vertex = vec3_rotate_y(transformed_vertex, mesh.rotation.y);
-      transformed_vertex = vec3_rotate_z(transformed_vertex, mesh.rotation.z);
+      transformed_vertex = mat4_mul_vec4(rotation_matrix_z, transformed_vertex);
+      transformed_vertex = mat4_mul_vec4(rotation_matrix_y, transformed_vertex);
+      transformed_vertex = mat4_mul_vec4(rotation_matrix_x, transformed_vertex);
+      transformed_vertex =
+          mat4_mul_vec4(translation_matrix, transformed_vertex);
 
-      transformed_vertex.z += depth;
       transformed_vertices[j] = transformed_vertex;
     }
 
     // Backface culling
     if (rendering_data.bc == BACKFACE_CULLING_ON) {
-      vec3_t vector_a = transformed_vertices[0];
-      vec3_t vector_b = transformed_vertices[1];
-      vec3_t vector_c = transformed_vertices[2];
+      vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
+      vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
+      vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
 
       vec3_t vector_ba = vec3_sub(vector_b, vector_a);
       vec3_t vector_ca = vec3_sub(vector_c, vector_a);
       vec3_normalize(&vector_ba);
-      vec3_normalize(&vector_ba);
+      vec3_normalize(&vector_ca);
 
       vec3_t normal = vec3_cross(vector_ba, vector_ca);
       vec3_normalize(&normal);
@@ -136,14 +150,29 @@ void update(void) {
       }
     }
     // Projection
+    vec2_t projected_points[3];
     for (int j = 0; j < 3; j++) {
-      vec2_t projected_point = project(transformed_vertices[j]);
+      vec2_t projected_point = project(vec3_from_vec4(transformed_vertices[j]));
 
       projected_point.x += (window_width / 2);
       projected_point.y += (window_height / 2);
 
-      projected_triangle.points[j] = projected_point;
+      projected_points[j] = projected_point;
     }
+    float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z +
+                       transformed_vertices[2].z) /
+                      3;
+
+    triangle_t projected_triangle = {
+        .points =
+            {
+                {projected_points[0].x, projected_points[0].y},
+                {projected_points[1].x, projected_points[1].y},
+                {projected_points[2].x, projected_points[2].y},
+            },
+        .color = mesh.faces[i].color,
+        .avg_depth = avg_depth,
+    };
 
     array_push(triangles_to_render, projected_triangle);
   }
