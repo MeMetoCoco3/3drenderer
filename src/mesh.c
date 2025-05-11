@@ -8,6 +8,7 @@ mesh_t mesh = {
     .rotation = {0, 0, 0},
     .scale = {1.0, 1.0, 1.0},
     .translation = {0, 0, 0},
+    .sheer = {0, 0, 0},
 };
 
 void load_cube_mesh_data(void) {

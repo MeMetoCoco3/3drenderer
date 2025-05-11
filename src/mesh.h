@@ -17,6 +17,7 @@ typedef struct {
   vec3_t rotation;
   vec3_t scale;
   vec3_t translation;
+  vec3_t sheer;
 } mesh_t;
 
 extern mesh_t mesh;

@@ -5,12 +5,14 @@
 #include "mesh.h"
 #include "triangle.h"
 #include "vector.h"
+#include <math.h>
+
 bool is_running;
+
 int previous_frame_time = 0;
-
 triangle_t *triangles_to_render = NULL;
-
 rendering_data_t rendering_data;
+mat4_t projection_matrix;
 
 int main(void) {
   is_running = init_window();
@@ -38,6 +40,13 @@ void setup(void) {
   color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
+
+  //  This is the same as 180/3 = 60 degrees. (It is in radians)
+  float FOV = 3.14159 / 3;
+  float aspect = (float)window_height / (float)window_width;
+  float znear = 0.1;
+  float zfar = 100.0;
+  projection_matrix = mat4_make_perspective(FOV, aspect, znear, zfar);
   // load_obj_file_data("./assets/cube.obj");
   load_cube_mesh_data();
 }
@@ -85,14 +94,16 @@ void update(void) {
 
   triangles_to_render = NULL;
 
-  // mesh.rotation.x += 0.01f;
+  mesh.rotation.x += 0.01f;
   // mesh.rotation.y += 0.01f;
-  mesh.rotation.z += 0.02f;
+  // mesh.rotation.z += 0.02f;
 
-  mesh.scale.x += 0.001f;
+  // mesh.scale.x += 0.001f;
   // mesh.scale.y += 0.001f;
 
   // mesh.translation.x += 0.01f;
+
+  // mesh.sheer.x += 0.01f;
   mesh.translation.z = depth;
 
   mat4_t scale_matrix =
@@ -102,6 +113,10 @@ void update(void) {
   mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
   mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
   mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+
+  mat4_t sheer_matrix_x = mat4_make_shear_x(mesh.sheer.y, mesh.sheer.z);
+  mat4_t sheer_matrix_y = mat4_make_shear_y(mesh.sheer.x, mesh.sheer.z);
+  mat4_t sheer_matrix_z = mat4_make_shear_z(mesh.sheer.x, mesh.sheer.y);
 
   int num_faces = array_length(mesh.faces);
   for (int i = 0; i < num_faces; i++) {
@@ -119,6 +134,10 @@ void update(void) {
       vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
       mat4_t world_matrix = mat4_identity();
+
+      world_matrix = mat4_mul_mat4(sheer_matrix_x, world_matrix);
+      world_matrix = mat4_mul_mat4(sheer_matrix_y, world_matrix);
+      world_matrix = mat4_mul_mat4(sheer_matrix_z, world_matrix);
 
       world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
       world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
@@ -152,14 +171,16 @@ void update(void) {
       }
     }
     // Projection
-    vec2_t projected_points[3];
+    vec4_t projected_points[3];
     for (int j = 0; j < 3; j++) {
-      vec2_t projected_point = project(vec3_from_vec4(transformed_vertices[j]));
+      projected_points[j] =
+          mat4_mul_vec4_project(projection_matrix, transformed_vertices[j]);
 
-      projected_point.x += (window_width / 2);
-      projected_point.y += (window_height / 2);
+      projected_points[j].x *= (window_width / 2.0);
+      projected_points[j].y *= (window_height / 2.0);
 
-      projected_points[j] = projected_point;
+      projected_points[j].x += (window_width / 2.0);
+      projected_points[j].y += (window_height / 2.0);
     }
     float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z +
                        transformed_vertices[2].z) /

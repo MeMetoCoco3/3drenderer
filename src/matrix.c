@@ -66,6 +66,27 @@ mat4_t mat4_make_rotation_z(float angle) {
   return m;
 }
 
+mat4_t mat4_make_shear_x(float sy, float sz) {
+  mat4_t m = mat4_identity();
+  m.values[0][1] = sy;
+  m.values[0][2] = sz;
+  return m;
+}
+
+mat4_t mat4_make_shear_y(float sx, float sz) {
+  mat4_t m = mat4_identity();
+  m.values[1][0] = sx;
+  m.values[1][2] = sz;
+  return m;
+}
+
+mat4_t mat4_make_shear_z(float sx, float sy) {
+  mat4_t m = mat4_identity();
+  m.values[2][0] = sx;
+  m.values[2][1] = sy;
+  return m;
+}
+
 vec4_t mat4_mul_vec4(mat4_t m, vec4_t v) {
   vec4_t result;
 
@@ -91,4 +112,26 @@ mat4_t mat4_mul_mat4(mat4_t a, mat4_t b) {
     }
   }
   return m;
+}
+
+mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
+  mat4_t m = {{{0}}};
+  m.values[0][0] = aspect * (1 / tan(fov / 2));
+  m.values[1][1] = 1 / tan(fov / 2);
+  m.values[2][2] = zfar / (zfar - znear);
+  m.values[2][3] = (-zfar * znear) / (zfar - znear);
+  m.values[3][2] = 1.0f;
+  return m;
+}
+
+vec4_t mat4_mul_vec4_project(mat4_t m, vec4_t v) {
+  vec4_t result = mat4_mul_vec4(m, v);
+
+  // Perform perspective divide.
+  if (result.w != 0.0) {
+    result.x /= result.w;
+    result.y /= result.w;
+    result.z /= result.w;
+  }
+  return result;
 }

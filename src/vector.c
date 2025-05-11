@@ -94,12 +94,6 @@ void vec3_normalize(vec3_t *v) {
   v->z /= length;
 }
 
-vec2_t project(vec3_t point) {
-  vec2_t point_2d = {.x = (point.x * fov_factor) / point.z,
-                     .y = (point.y * fov_factor) / point.z};
-  return point_2d;
-}
-
 vec4_t vec4_from_vec3(vec3_t v) {
   vec4_t v4 = {.x = v.x, .y = v.y, .z = v.z, .w = 1.0};
   return v4;
