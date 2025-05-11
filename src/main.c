@@ -3,10 +3,10 @@
 #include "display.h"
 #include "matrix.h"
 #include "mesh.h"
+#include "sort.h"
 #include "triangle.h"
 #include "vector.h"
 #include <math.h>
-
 bool is_running;
 
 int previous_frame_time = 0;
@@ -199,6 +199,9 @@ void update(void) {
 
     array_push(triangles_to_render, projected_triangle);
   }
+
+  // Sort the triangles to render by their avg_depth
+  quick_sort(triangles_to_render, 0, array_length(triangles_to_render) - 1);
 }
 
 void render(void) {
