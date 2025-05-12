@@ -98,7 +98,7 @@ void load_obj_file_data(char *file_name) {
       face.a = f_values[0];
       face.b = f_values[1];
       face.c = f_values[2];
-      face.color = 0;
+      face.color = 0xFF8A4FFF;
       array_push(mesh.faces, face);
       break;
     }

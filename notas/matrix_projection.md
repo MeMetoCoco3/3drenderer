@@ -1,8 +1,8 @@
 ### Matrix projection.
-Matrix projection es el proceso mediante el cual modificamos un set de cordenadas en 3D de tal forma que consigamos los siguientes resultados:
-1. Ajustar el aspect_ratio del monitor.
-2. Los objetos mas alejados, pareceran mas pequeños.
-3. Los resultados vendran truncados en un espacio cubico de -1 a 1 en x, y, z.
+Matrix projection es el proceso mediante el cual modificamos un set de cordenadas en 3D de tal forma que consigamos los siguientes resultados (despues del perspective divide!):
+1. Normalizar X para conseguir un valor entre -1 y 1, basandonos en el aspect-ratio y FOV.
+1. Normalizar X para conseguir un valor entre -1 y 1, basandonos en el FOV.
+1. Normalizar X para conseguir un valor entre 0 o (znear) y 1 o (zfar).
 Podemos visualizarlo como, el cono que se forma por la perspectiva de la camara , pero transformado en un cubo, haciendo que los objetos cercanos a la camara se expandan y los otros se contraigan.
 Tras estos resultados, aplicaremos perspective divide, que es la division del resultado entre el calor de Z antes de la conversion.
 
@@ -34,3 +34,8 @@ l = zfar/zfar-znear
 x -> afx
 y -> fy
 z -> lz - lznear
+
+
+### PORQUE NO HACEMOS DIVISION DIVIDE DIRECTAMENTE EN LA MATRIZ
+Pues porque se suele hacer clipping antes de aplicar division divide. 
+Clipping es el processo mediante el cual decimos que objetos salen en escena y cuales no.

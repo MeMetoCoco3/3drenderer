@@ -1,6 +1,7 @@
 #ifndef COLORS_H
 #define COLORS_H
 
+#include <stdint.h>
 #define C_RED 0xFFF71735
 #define C_GREEN 0xFF00FF00
 #define C_BLUE 0xFF0000FF
@@ -10,4 +11,6 @@
 #define C_GUNMETAL 0xFF132E32
 #define C_MAGNOLIA 0xFFE4DEE4
 #define C_FACE_DEFAULT 0xFFFF9F1C
+
+uint32_t light_apply_intensity(uint32_t original_color, float factor);
 #endif

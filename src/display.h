@@ -20,9 +20,12 @@ enum RENDERING_MODES {
 
 enum BACKFACE_CULLING { BACKFACE_CULLING_ON, BACKFACE_CULLING_OF };
 
+enum LIGHTS { LIGHTS_ON, LIGHTS_OF };
+
 typedef struct {
   enum RENDERING_MODES rm;
   enum BACKFACE_CULLING bc;
+  enum LIGHTS l;
 } rendering_data_t;
 
 extern SDL_Window *window;

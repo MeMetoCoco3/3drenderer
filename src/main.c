@@ -1,6 +1,7 @@
 #include "array.h"
 #include "colors.h"
 #include "display.h"
+#include "light.h"
 #include "matrix.h"
 #include "mesh.h"
 #include "sort.h"
@@ -13,6 +14,7 @@ int previous_frame_time = 0;
 triangle_t *triangles_to_render = NULL;
 rendering_data_t rendering_data;
 mat4_t projection_matrix;
+light_t light_source;
 
 int main(void) {
   is_running = init_window();
@@ -33,7 +35,7 @@ void setup(void) {
   // Aplicamos default values de como queremos renderizar nuestros modelos.
   rendering_data.rm = RM_WIREFRAME;
   rendering_data.bc = BACKFACE_CULLING_ON;
-
+  rendering_data.l = LIGHTS_OF;
   // Creamos un color_buffer con el tamaño de W*H*sizeof(pixel).
   color_buffer =
       (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
@@ -56,12 +58,14 @@ void setup(void) {
   float zfar = 100.0;
   projection_matrix = mat4_make_perspective(FOV, aspect, znear, zfar);
 
+  light_source = (light_t){.direction = {.x = 1000, .y = -200, .z = -1000}};
+
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  // load_obj_file_data("./assets/cube.obj");
+  load_obj_file_data("./assets/f22.obj");
 
   // Cargar datos predefinidos en nuestra mesh.
-  load_cube_mesh_data();
+  // load_cube_mesh_data();
 }
 
 void get_input(void) {
@@ -93,7 +97,15 @@ void get_input(void) {
       rendering_data.bc = BACKFACE_CULLING_ON;
     }
     if (event.key.keysym.sym == SDLK_d) {
+      rendering_data.l = LIGHTS_OF;
       rendering_data.bc = BACKFACE_CULLING_OF;
+    }
+    if (event.key.keysym.sym == SDLK_l) {
+      rendering_data.l = LIGHTS_OF;
+    }
+    if (event.key.keysym.sym == SDLK_k) {
+      rendering_data.bc = BACKFACE_CULLING_ON;
+      rendering_data.l = LIGHTS_ON;
     }
     break;
   }
@@ -152,6 +164,7 @@ void update(void) {
     // Extraemos los correspondientes vertices a cada indice.
     face_t face = mesh.faces[i];
     vec3_t face_vertices[3];
+    uint32_t final_color;
     face_vertices[0] = mesh.vertices[face.a - 1];
     face_vertices[1] = mesh.vertices[face.b - 1];
     face_vertices[2] = mesh.vertices[face.c - 1];
@@ -212,6 +225,33 @@ void update(void) {
       }
     }
 
+    // Calculate new colors with light
+    if (rendering_data.l == LIGHTS_ON) {
+      vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
+      vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
+      vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
+
+      vec3_t vector_ba = vec3_sub(vector_b, vector_a);
+      vec3_t vector_ca = vec3_sub(vector_c, vector_a);
+      vec3_normalize(&vector_ba);
+      vec3_normalize(&vector_ca);
+
+      vec3_t normal = vec3_cross(vector_ca, vector_ba);
+      vec3_t light_source_direction = light_source.direction;
+      vec3_normalize(&light_source_direction);
+      vec3_normalize(&normal);
+
+      // vec3_t light_ray = vec3_sub(light_source.direction, vector_a);
+      float factor = vec3_dot(normal, light_source_direction);
+      if (factor < 0.2f)
+        factor = 0.2f;
+      if (factor > 1.0f)
+        factor = 1.0f;
+
+      final_color = light_apply_intensity(mesh.faces[i].color, factor);
+    } else {
+      final_color = mesh.faces[i].color;
+    }
     // Projection
     vec4_t projected_points[3];
     for (int j = 0; j < 3; j++) {
@@ -243,7 +283,7 @@ void update(void) {
                 {projected_points[1].x, projected_points[1].y},
                 {projected_points[2].x, projected_points[2].y},
             },
-        .color = mesh.faces[i].color,
+        .color = final_color,
         .avg_depth = avg_depth,
     };
 
