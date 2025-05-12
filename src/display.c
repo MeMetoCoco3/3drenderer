@@ -1,6 +1,7 @@
 #include "display.h"
 #include <stdint.h>
 
+// Declaramos variables globales.
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 
@@ -11,33 +12,37 @@ int window_height = 600;
 int window_width = 800;
 
 bool init_window(void) {
+  // Iniciamos la libreria.
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-
     fprintf(stderr, "Error initializing SDL.\n");
     return false;
   }
 
-  // Query SDL to know size of display.
+  // Preguntamos a SDL cual es el tamaño de nuestro monitor.
   SDL_DisplayMode display_mode;
   SDL_GetCurrentDisplayMode(0, &display_mode);
   window_height = display_mode.h;
   window_width = display_mode.w;
 
+  // Creamos una ventana con un (titulo, posicion.x, posicion.y, w, h, flags).
   window =
       SDL_CreateWindow(NULL, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                        window_width, window_height, SDL_WINDOW_BORDERLESS);
+
   if (!window) {
     fprintf(stderr, "Error initializing Window.\n");
     return false;
   }
-  // El segundo argumento define el device context, si es -1, pilla el primero
-  // que pueda.
+
+  // Creamos un renderer con (window, renderer_driver, flags).
+  //
   renderer = SDL_CreateRenderer(window, -1, 0);
   if (!renderer) {
     fprintf(stderr, "Error initializing Renderer.\n");
     return false;
   }
-  // Set Fullscreen.
+
+  // Set real fullscreen.
   SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
   return true;
 }
