@@ -1,11 +1,18 @@
 #include "sort.h"
 #include "triangle.h"
 
-void swap(int *a, int *b) {
+void swap_int(int *a, int *b) {
   int tmp = *a;
   *a = *b;
   *b = tmp;
 }
+
+void swap_f(float *a, float *b) {
+  float tmp = *a;
+  *a = *b;
+  *b = tmp;
+}
+
 void swap_triangle(triangle_t *a, triangle_t *b) {
   triangle_t tmp = *a;
   *a = *b;

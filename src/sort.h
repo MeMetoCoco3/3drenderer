@@ -3,7 +3,8 @@
 
 #include "triangle.h"
 #include <stdio.h>
-void swap(int *a, int *b);
+void swap_int(int *a, int *b);
+void swap_f(float *a, float *b);
 void swap_triangle(triangle_t *a, triangle_t *b);
 
 void quick_sort(triangle_t *triangles, int low, int high);
