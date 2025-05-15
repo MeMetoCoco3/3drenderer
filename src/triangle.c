@@ -21,6 +21,9 @@ void draw_texel(int x, int y, vec2_t point_a, vec2_t point_b, vec2_t point_c,
   int text_x = abs((int)(interpolated_u * texture_width));
   int text_y = abs((int)(interpolated_v * texture_height));
 
+  text_x = clamp(text_x, 0, texture_width - 1);
+  text_y = clamp(text_y, 0, texture_height - 1);
+
   u_int32_t texture_color = texture[(texture_width * text_y) + text_x];
   // u_int32_t texture_color_big_endian = __builtin_bswap32(texture_color);
 
