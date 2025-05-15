@@ -116,6 +116,7 @@ mat4_t mat4_mul_mat4(mat4_t a, mat4_t b) {
 
 mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
   mat4_t m = {{{0}}};
+
   m.values[0][0] = aspect * (1 / tan(fov / 2));
   m.values[1][1] = 1 / tan(fov / 2);
   m.values[2][2] = zfar / (zfar - znear);

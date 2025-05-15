@@ -33,7 +33,7 @@ int main(void) {
 
 void setup(void) {
   // Aplicamos default values de como queremos renderizar nuestros modelos.
-  rendering_data.rm = RM_WIREFRAME;
+  rendering_data.rm = RM_TEXTURED_WIRE;
   rendering_data.bc = BACKFACE_CULLING_ON;
   rendering_data.l = LIGHTS_OF;
   // Creamos un color_buffer con el tamaño de W*H*sizeof(pixel).
@@ -58,9 +58,6 @@ void setup(void) {
   float zfar = 100.0;
   projection_matrix = mat4_make_perspective(FOV, aspect, znear, zfar);
 
-  // Cargamos los datos de la texture en la memoria.
-  mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
-
   light_source = (light_t){.direction = {.x = 1000, .y = -200, .z = -1000}};
 
   // Estas dos funciones se encargan de:
@@ -69,6 +66,10 @@ void setup(void) {
 
   // Cargar datos predefinidos en nuestra mesh.
   load_cube_mesh_data();
+
+  // Cargamos los datos de la texture en la memoria.
+
+  mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
 }
 
 void get_input(void) {
@@ -121,6 +122,7 @@ void get_input(void) {
 }
 
 void update(void) {
+
   // Deltatime.
   // Definimos cuantos ticks tenemos que esperar para que los frames no
   // se dibujen mas rapido de lo que deberian.
@@ -136,17 +138,17 @@ void update(void) {
   // Movemos, rotamos, escalamos, nuestra mesh.
   // Crearemos matrices a partir de estos valores para multiplicar cada matriz
   // con la world_matrix.
-  mesh.rotation.x += 0.01f;
-  // mesh.rotation.y += 0.01f;
-  // mesh.rotation.z += 0.02f;
+  mesh.rotation.x += 0.02f;
+  mesh.rotation.y += 0.02f;
+  mesh.rotation.z += 0.02f;
 
   // mesh.scale.x += 0.001f;
   // mesh.scale.y += 0.001f;
 
   // mesh.translation.x += 0.01f;
-
-  // mesh.sheer.x += 0.01f;
+  // mesh.translation.y += 0.01f;
   mesh.translation.z = depth;
+  // mesh.sheer.x += 0.01f;
 
   // El orden importa, siempre aplicaremos antes:
   // 1. Scale.
@@ -161,9 +163,9 @@ void update(void) {
   mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
   mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
 
-  mat4_t sheer_matrix_x = mat4_make_shear_x(mesh.sheer.y, mesh.sheer.z);
-  mat4_t sheer_matrix_y = mat4_make_shear_y(mesh.sheer.x, mesh.sheer.z);
-  mat4_t sheer_matrix_z = mat4_make_shear_z(mesh.sheer.x, mesh.sheer.y);
+  // mat4_t sheer_matrix_x = mat4_make_shear_x(mesh.sheer.y, mesh.sheer.z);
+  // mat4_t sheer_matrix_y = mat4_make_shear_y(mesh.sheer.x, mesh.sheer.z);
+  // mat4_t sheer_matrix_z = mat4_make_shear_z(mesh.sheer.x, mesh.sheer.y);
 
   // Loopeamos entre todas nuestras caras.
   // Cada cara tiene 3 int, y 1 color.
@@ -190,9 +192,9 @@ void update(void) {
 
       mat4_t world_matrix = mat4_identity();
 
-      world_matrix = mat4_mul_mat4(sheer_matrix_x, world_matrix);
-      world_matrix = mat4_mul_mat4(sheer_matrix_y, world_matrix);
-      world_matrix = mat4_mul_mat4(sheer_matrix_z, world_matrix);
+      // world_matrix = mat4_mul_mat4(sheer_matrix_x, world_matrix);
+      // world_matrix = mat4_mul_mat4(sheer_matrix_y, world_matrix);
+      // world_matrix = mat4_mul_mat4(sheer_matrix_z, world_matrix);
 
       world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
       world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
@@ -213,16 +215,17 @@ void update(void) {
       vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
 
       // Sacamos la direccion de dos vectores con mismo origen de la cara.
-      vec3_t vector_ba = vec3_sub(vector_b, vector_a);
-      vec3_t vector_ca = vec3_sub(vector_c, vector_a);
-      vec3_normalize(&vector_ba);
-      vec3_normalize(&vector_ca);
+      vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+      vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+      vec3_normalize(&vector_ab);
+      vec3_normalize(&vector_ac);
       // El CrossProduct the dos vectores nos da un tercer vector perpendicular
       // a estos, o la normal de la cara formada por dichos vectores.
-      vec3_t normal = vec3_cross(vector_ba, vector_ca);
+      vec3_t normal = vec3_cross(vector_ab, vector_ac);
       vec3_normalize(&normal);
 
       // Calculamos vector entre la camara y el punto que estamos chekeando.
+
       vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
       // El dot product nos da el angulo entre dos vectores.
@@ -271,14 +274,10 @@ void update(void) {
       projected_points[j] =
           mat4_mul_vec4_project(projection_matrix, transformed_vertices[j]);
 
+      projected_points[j].y *= -1;
       // Escalar a Screen Coordinates.
       projected_points[j].x *= (window_width / 2.0);
       projected_points[j].y *= (window_height / 2.0);
-
-      // TODO:
-      // Invertimos Y porque Y hacia abajo es positivo en la pantalla, a
-      // diferencia del modelo. POR LO QUE SEA, mis puntos estan bien!!
-      // projected_points[j].y *= -1;
 
       // Trasladar a Screen Coordinates.
       projected_points[j].x += (window_width / 2.0);
@@ -288,7 +287,7 @@ void update(void) {
     // Calculamos avg_depth para ordenar triangulos en funcion a ella.
     float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z +
                        transformed_vertices[2].z) /
-                      3;
+                      3.0;
 
     triangle_t projected_triangle = {
         .points =
@@ -311,6 +310,8 @@ void update(void) {
 }
 
 void render(void) {
+  SDL_RenderClear(renderer);
+
   // Dibujamos grid.
   draw_grid_points(C_GUNMETAL);
 
@@ -335,13 +336,14 @@ void render(void) {
 
     if (rendering_data.rm == RM_TEXTURED ||
         rendering_data.rm == RM_TEXTURED_WIRE) {
-
       draw_textured_triangle(
           triangle.points[0].x, triangle.points[0].y, triangle.textcoords[0].u,
-          triangle.textcoords[0].v, triangle.points[1].x, triangle.points[1].y,
-          triangle.textcoords[1].u, triangle.textcoords[1].v,
+          triangle.textcoords[0].v, // vertex A
+          triangle.points[1].x, triangle.points[1].y, triangle.textcoords[1].u,
+          triangle.textcoords[1].v, // vertex B
           triangle.points[2].x, triangle.points[2].y, triangle.textcoords[2].u,
-          triangle.textcoords[2].v, mesh_texture);
+          triangle.textcoords[2].v, // vertex C
+          mesh_texture);
     }
 
     if (rendering_data.rm == RM_COLORED_LINES ||

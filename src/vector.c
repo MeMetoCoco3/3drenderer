@@ -2,7 +2,7 @@
 #include <math.h>
 
 float fov_factor = 720;
-int depth = -5;
+int depth = 5;
 vec3_t camera_position = {.x = 0, .y = 0, .z = 0};
 
 float vec2_length(vec2_t v) { return sqrt(v.x * v.x + v.y * v.y); }
@@ -101,6 +101,14 @@ vec4_t vec4_from_vec3(vec3_t v) {
 vec3_t vec3_from_vec4(vec4_t v) {
   vec3_t v3 = {.x = v.x, .y = v.y, .z = v.z};
   return v3;
+}
+
+int clamp(int value, int min, int max) {
+  if (value < min)
+    return min;
+  if (value > max)
+    return max;
+  return value;
 }
 
 /* vec2_t project(vec3_t point) { */
