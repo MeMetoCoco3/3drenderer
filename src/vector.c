@@ -5,6 +5,11 @@ float fov_factor = 720;
 int depth = 5;
 vec3_t camera_position = {.x = 0, .y = 0, .z = 0};
 
+vec2_t vec2_from_vec4(vec4_t a) {
+  vec2_t res = {.x = a.x, .y = a.y};
+  return res;
+}
+
 float vec2_length(vec2_t v) { return sqrt(v.x * v.x + v.y * v.y); }
 vec2_t vec2_add(vec2_t a, vec2_t b) {
   vec2_t res = {a.x + b.x, a.y + b.y};

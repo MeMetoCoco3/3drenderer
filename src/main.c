@@ -225,7 +225,6 @@ void update(void) {
       vec3_normalize(&normal);
 
       // Calculamos vector entre la camara y el punto que estamos chekeando.
-
       vec3_t camera_ray = vec3_sub(camera_position, vector_a);
 
       // El dot product nos da el angulo entre dos vectores.
@@ -292,9 +291,12 @@ void update(void) {
     triangle_t projected_triangle = {
         .points =
             {
-                {projected_points[0].x, projected_points[0].y},
-                {projected_points[1].x, projected_points[1].y},
-                {projected_points[2].x, projected_points[2].y},
+                {projected_points[0].x, projected_points[0].y,
+                 projected_points[0].z, projected_points[0].w},
+                {projected_points[1].x, projected_points[1].y,
+                 projected_points[1].z, projected_points[1].w},
+                {projected_points[2].x, projected_points[2].y,
+                 projected_points[2].z, projected_points[2].w},
             },
 
         .textcoords = {{face.a_uv.u, face.a_uv.v},
@@ -337,11 +339,14 @@ void render(void) {
     if (rendering_data.rm == RM_TEXTURED ||
         rendering_data.rm == RM_TEXTURED_WIRE) {
       draw_textured_triangle(
-          triangle.points[0].x, triangle.points[0].y, triangle.textcoords[0].u,
+          triangle.points[0].x, triangle.points[0].y, triangle.points[0].z,
+          triangle.points[0].w, triangle.textcoords[0].u,
           triangle.textcoords[0].v, // vertex A
-          triangle.points[1].x, triangle.points[1].y, triangle.textcoords[1].u,
+          triangle.points[1].x, triangle.points[1].y, triangle.points[1].z,
+          triangle.points[1].w, triangle.textcoords[1].u,
           triangle.textcoords[1].v, // vertex B
-          triangle.points[2].x, triangle.points[2].y, triangle.textcoords[2].u,
+          triangle.points[2].x, triangle.points[2].y, triangle.points[2].z,
+          triangle.points[2].w, triangle.textcoords[2].u,
           triangle.textcoords[2].v, // vertex C
           mesh_texture);
     }
