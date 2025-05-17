@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #define MAX_LINE_LENGTH 1024
 
-enum OBJ_FILE_TOKENS { V, F };
+enum OBJ_FILE_TOKENS { V, F, VT, VN };
 
 typedef struct {
   vec3_t *vertices;

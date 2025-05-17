@@ -42,6 +42,7 @@ void load_obj_file_data(char *file_name) {
     exit(1);
   }
 
+  tex2_t *texcoords = NULL;
   char line[MAX_LINE_LENGTH];
   while (fgets(line, MAX_LINE_LENGTH, fptr)) {
     if (is_line_empty(line)) {
@@ -58,15 +59,15 @@ void load_obj_file_data(char *file_name) {
       kind = F;
     } else if (strcmp(token, "v") == 0) {
       kind = V;
+    } else if (strcmp(token, "vt") == 0) {
+      kind = VT;
     } else {
       continue;
     }
 
     switch (kind) {
     case V: {
-      vec3_t point;
       float v_values[3];
-      // while (token != NULL) {
       for (int i = 0; i < 3; i++) {
         token = strtok(NULL, " \t\n");
         if (token == NULL) {
@@ -75,14 +76,16 @@ void load_obj_file_data(char *file_name) {
         }
         v_values[i] = atof(token);
       }
-      point.x = v_values[0];
-      point.y = v_values[1];
-      point.z = v_values[2];
+
+      vec3_t point = {
+          .x = v_values[0],
+          .y = v_values[1],
+          .z = v_values[2],
+      };
       array_push(mesh.vertices, point);
       break;
     }
     case F: {
-      face_t face;
       int f_values[3];
       int t_values[3];
       int n_values[3];
@@ -95,11 +98,34 @@ void load_obj_file_data(char *file_name) {
         }
         sscanf(token, "%d/%d/%d", &f_values[i], &t_values[i], &n_values[i]);
       }
-      face.a = f_values[0];
-      face.b = f_values[1];
-      face.c = f_values[2];
-      face.color = 0xFF8A4FFF;
+
+      face_t face = {
+          .a = f_values[0] - 1,
+          .b = f_values[1] - 1,
+          .c = f_values[2] - 1,
+          .a_uv = texcoords[t_values[0] - 1],
+          .b_uv = texcoords[t_values[1] - 1],
+          .c_uv = texcoords[t_values[2] - 1],
+          .color = 0xFF8A4FFF,
+      };
       array_push(mesh.faces, face);
+      break;
+    }
+    case VT: {
+      float uv_vertices[2];
+      for (int i = 0; i < 2; i++) {
+        token = strtok(NULL, " \t\n");
+        if (token == NULL) {
+          printf("Not enough vertex coord.");
+          exit(1);
+        }
+        uv_vertices[i] = atof(token);
+      }
+      tex2_t textcoord = {
+          .u = uv_vertices[0],
+          .v = uv_vertices[1],
+      };
+      array_push(texcoords, textcoord);
       break;
     }
     default:
@@ -108,7 +134,7 @@ void load_obj_file_data(char *file_name) {
     }
   }
   fclose(fptr);
-
+  array_free(texcoords);
   return;
 }
 

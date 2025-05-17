@@ -111,6 +111,9 @@ void draw_textured_triangle(int x0, int y0, float z0, float w0, float u0,
     swap_f(&u0, &u1);
     swap_f(&v0, &v1);
   }
+  v0 = 1.0 - v0;
+  v1 = 1.0 - v1;
+  v2 = 1.0 - v2;
 
   vec4_t point_a = {x0, y0, z0, w0};
   vec4_t point_b = {x1, y1, z1, w1};

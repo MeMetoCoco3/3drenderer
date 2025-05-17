@@ -65,15 +65,15 @@ void setup(void) {
 
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  // load_obj_file_data("./assets/f22.obj");
+  load_obj_file_data("./assets/drone.obj");
 
   // Cargar datos predefinidos en nuestra mesh.
   // load_cube_mesh_data();
 
   // Cargamos los datos de la texture en la memoria.
-  load_png_texture_data("./assets/smallsweetie.png");
+  // load_png_texture_data("./assets/smallsweetie.png");
 
-  // load_png_texture_data("./assets/cube.png");
+  load_png_texture_data("./assets/drone.png");
   printf("%d, %d\n", texture_width, texture_height);
   // mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
 }
@@ -182,9 +182,9 @@ void update(void) {
     face_t face = mesh.faces[i];
     vec3_t face_vertices[3];
     uint32_t final_color;
-    face_vertices[0] = mesh.vertices[face.a - 1];
-    face_vertices[1] = mesh.vertices[face.b - 1];
-    face_vertices[2] = mesh.vertices[face.c - 1];
+    face_vertices[0] = mesh.vertices[face.a];
+    face_vertices[1] = mesh.vertices[face.b];
+    face_vertices[2] = mesh.vertices[face.c];
 
     // Transformamos los vertices.
     // Como algunas operaciones como translation, o la conservacion del valor Z
