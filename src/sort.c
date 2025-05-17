@@ -32,7 +32,7 @@ int partition(triangle_t *triangles, int low, int high) {
 
   int i = low;
   for (int j = low; j < high; j++) {
-    if (triangles[j].avg_depth < pivot.avg_depth) {
+    if (triangles[j].avg_depth > pivot.avg_depth) {
       swap_triangle(&triangles[i], &triangles[j]);
       i++;
     }

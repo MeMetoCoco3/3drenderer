@@ -6,8 +6,10 @@
 #include "mesh.h"
 #include "sort.h"
 #include "triangle.h"
+#include "upng.h"
 #include "vector.h"
 #include <math.h>
+
 bool is_running;
 
 int previous_frame_time = 0;
@@ -42,9 +44,10 @@ void setup(void) {
   // Creamos una textura donde copiaremos el color buffer.
   // Esta textura sera interpretada por el renderer.
   // Pixel Format = AARRGGBB;
+  // Lo cambie ya que las texturas estan codificadas en RGBA format.
   // Text Access straming = Recurriremos a este bloque de memoria
   // constantemente.
-  color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
+  color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32,
                                            SDL_TEXTUREACCESS_STREAMING,
                                            window_width, window_height);
 
@@ -65,11 +68,14 @@ void setup(void) {
   // load_obj_file_data("./assets/f22.obj");
 
   // Cargar datos predefinidos en nuestra mesh.
-  load_cube_mesh_data();
+  // load_cube_mesh_data();
 
   // Cargamos los datos de la texture en la memoria.
+  load_png_texture_data("./assets/smallsweetie.png");
 
-  mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
+  // load_png_texture_data("./assets/cube.png");
+  printf("%d, %d\n", texture_width, texture_height);
+  // mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
 }
 
 void get_input(void) {
@@ -138,9 +144,9 @@ void update(void) {
   // Movemos, rotamos, escalamos, nuestra mesh.
   // Crearemos matrices a partir de estos valores para multiplicar cada matriz
   // con la world_matrix.
-  mesh.rotation.x += 0.02f;
+  // mesh.rotation.x += 0.02f;
   mesh.rotation.y += 0.02f;
-  mesh.rotation.z += 0.02f;
+  // mesh.rotation.z += 0.02f;
 
   // mesh.scale.x += 0.001f;
   // mesh.scale.y += 0.001f;
