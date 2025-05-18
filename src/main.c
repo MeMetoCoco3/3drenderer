@@ -35,12 +35,13 @@ int main(void) {
 
 void setup(void) {
   // Aplicamos default values de como queremos renderizar nuestros modelos.
-  rendering_data.rm = RM_TEXTURED_WIRE;
+  rendering_data.rm = RM_COLORED;
   rendering_data.bc = BACKFACE_CULLING_ON;
   rendering_data.l = LIGHTS_OF;
   // Creamos un color_buffer con el tamaño de W*H*sizeof(pixel).
   color_buffer =
       (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
+  z_buffer = (float *)malloc(sizeof(float) * window_width * window_height);
   // Creamos una textura donde copiaremos el color buffer.
   // Esta textura sera interpretada por el renderer.
   // Pixel Format = AARRGGBB;
@@ -65,17 +66,13 @@ void setup(void) {
 
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  load_obj_file_data("./assets/drone.obj");
+  load_obj_file_data("./assets/efa.obj");
 
   // Cargar datos predefinidos en nuestra mesh.
   // load_cube_mesh_data();
 
   // Cargamos los datos de la texture en la memoria.
-  // load_png_texture_data("./assets/smallsweetie.png");
-
-  load_png_texture_data("./assets/drone.png");
-  printf("%d, %d\n", texture_width, texture_height);
-  // mesh_texture = (uint32_t *)REDBRICK_TEXTURE;
+  load_png_texture_data("./assets/efa.png");
 }
 
 void get_input(void) {
@@ -116,10 +113,8 @@ void get_input(void) {
       rendering_data.l = LIGHTS_OF;
       rendering_data.bc = BACKFACE_CULLING_OF;
     }
-    if (event.key.keysym.sym == SDLK_l) {
-      rendering_data.l = LIGHTS_OF;
-    }
     if (event.key.keysym.sym == SDLK_k) {
+      printf("LIGHTS ON");
       rendering_data.bc = BACKFACE_CULLING_ON;
       rendering_data.l = LIGHTS_ON;
     }
@@ -144,8 +139,8 @@ void update(void) {
   // Movemos, rotamos, escalamos, nuestra mesh.
   // Crearemos matrices a partir de estos valores para multiplicar cada matriz
   // con la world_matrix.
-  // mesh.rotation.x += 0.02f;
-  mesh.rotation.y += 0.02f;
+  mesh.rotation.x += 0.015f;
+  // mesh.rotation.y += 0.02f;
   // mesh.rotation.z += 0.02f;
 
   // mesh.scale.x += 0.001f;
@@ -248,12 +243,12 @@ void update(void) {
       vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
       vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
 
-      vec3_t vector_ba = vec3_sub(vector_b, vector_a);
-      vec3_t vector_ca = vec3_sub(vector_c, vector_a);
-      vec3_normalize(&vector_ba);
-      vec3_normalize(&vector_ca);
+      vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+      vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+      vec3_normalize(&vector_ab);
+      vec3_normalize(&vector_ac);
 
-      vec3_t normal = vec3_cross(vector_ca, vector_ba);
+      vec3_t normal = vec3_cross(vector_ab, vector_ac);
       vec3_t light_source_direction = light_source.direction;
       vec3_normalize(&light_source_direction);
       vec3_normalize(&normal);
@@ -289,11 +284,6 @@ void update(void) {
       projected_points[j].y += (window_height / 2.0);
     }
 
-    // Calculamos avg_depth para ordenar triangulos en funcion a ella.
-    float avg_depth = (transformed_vertices[0].z + transformed_vertices[1].z +
-                       transformed_vertices[2].z) /
-                      3.0;
-
     triangle_t projected_triangle = {
         .points =
             {
@@ -309,12 +299,11 @@ void update(void) {
                        {face.b_uv.u, face.b_uv.v},
                        {face.c_uv.u, face.c_uv.v}},
         .color = final_color,
-        .avg_depth = avg_depth,
     };
 
     array_push(triangles_to_render, projected_triangle);
   }
-  quick_sort(triangles_to_render, 0, array_length(triangles_to_render) - 1);
+  // quick_sort(triangles_to_render, 0, array_length(triangles_to_render) - 1);
 }
 
 void render(void) {
@@ -330,10 +319,12 @@ void render(void) {
     if (rendering_data.rm == RM_COLORED ||
         rendering_data.rm == RM_COLORED_LINES) {
 
-      draw_filled_triangle(triangle.points[0].x, triangle.points[0].y,
-                           triangle.points[1].x, triangle.points[1].y,
-                           triangle.points[2].x, triangle.points[2].y,
-                           triangle.color);
+      draw_filled_triangle(
+          triangle.points[0].x, triangle.points[0].y, triangle.points[0].z,
+          triangle.points[0].w, triangle.points[1].x, triangle.points[1].y,
+          triangle.points[1].z, triangle.points[1].w, triangle.points[2].x,
+          triangle.points[2].y, triangle.points[2].z, triangle.points[2].w,
+          triangle.color);
     }
 
     if (rendering_data.rm == RM_WIREFRAME_VERTEX) {
@@ -361,7 +352,7 @@ void render(void) {
         rendering_data.rm == RM_WIREFRAME ||
         rendering_data.rm == RM_WIREFRAME_VERTEX ||
         rendering_data.rm == RM_TEXTURED_WIRE) {
-      draw_triangle(triangle, C_BLUE);
+      draw_triangle(triangle, C_RED);
     }
   }
   // Liberamos los triangulos.
@@ -370,6 +361,7 @@ void render(void) {
   render_color_buffer();
   // Limpiamos el color buffer.
   clear_color_buffer(C_BLACK);
+  clear_z_buffer();
   // Actualizamos la pantalla.
   SDL_RenderPresent(renderer);
 }

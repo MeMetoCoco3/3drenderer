@@ -1,7 +1,10 @@
 #include "mesh.h"
+#include "colors.h"
 #include "triangle.h"
 #include "vector.h"
 #include <ctype.h>
+
+#include "colors.h"
 mesh_t mesh = {
     .vertices = NULL,
     .faces = NULL,
@@ -106,7 +109,7 @@ void load_obj_file_data(char *file_name) {
           .a_uv = texcoords[t_values[0] - 1],
           .b_uv = texcoords[t_values[1] - 1],
           .c_uv = texcoords[t_values[2] - 1],
-          .color = 0xFF8A4FFF,
+          .color = C_BLUE,
       };
       array_push(mesh.faces, face);
       break;
@@ -140,6 +143,7 @@ void load_obj_file_data(char *file_name) {
 
 void free_resources(void) {
   free(color_buffer);
+  free(z_buffer);
   upng_free(png_texture);
   array_free(mesh.faces);
   array_free(mesh.vertices);
