@@ -5,6 +5,7 @@
 #include <ctype.h>
 
 #include "colors.h"
+
 mesh_t mesh = {
     .vertices = NULL,
     .faces = NULL,

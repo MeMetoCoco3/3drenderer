@@ -10,11 +10,13 @@
 #include "vector.h"
 #include <math.h>
 
-bool is_running;
-
-int previous_frame_time = 0;
-triangle_t *triangles_to_render = NULL;
+#define MAX_TRIANGLES_PER_MESH 10000
+triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
+int num_triangles_to_render;
 rendering_data_t rendering_data;
+
+bool is_running;
+int previous_frame_time = 0;
 mat4_t projection_matrix;
 light_t light_source;
 
@@ -66,13 +68,13 @@ void setup(void) {
 
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  load_obj_file_data("./assets/efa.obj");
+  load_obj_file_data("./assets/drone.obj");
 
   // Cargar datos predefinidos en nuestra mesh.
   // load_cube_mesh_data();
 
   // Cargamos los datos de la texture en la memoria.
-  load_png_texture_data("./assets/efa.png");
+  load_png_texture_data("./assets/drone.png");
 }
 
 void get_input(void) {
@@ -133,8 +135,7 @@ void update(void) {
   }
   previous_frame_time = SDL_GetTicks();
 
-  // Definimos DynamicArray para agrupar nuestros triangulos.
-  triangles_to_render = NULL;
+  num_triangles_to_render = 0;
 
   // Movemos, rotamos, escalamos, nuestra mesh.
   // Crearemos matrices a partir de estos valores para multiplicar cada matriz
@@ -300,8 +301,10 @@ void update(void) {
                        {face.c_uv.u, face.c_uv.v}},
         .color = final_color,
     };
-
-    array_push(triangles_to_render, projected_triangle);
+    if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
+      triangles_to_render[num_triangles_to_render] = projected_triangle;
+      num_triangles_to_render++;
+    }
   }
   // quick_sort(triangles_to_render, 0, array_length(triangles_to_render) - 1);
 }
@@ -313,7 +316,7 @@ void render(void) {
   draw_grid_points(C_GUNMETAL);
 
   // Loopeamos los triangulos a renderizar y los dibujamos.
-  int num_triangles = array_length(triangles_to_render);
+  int num_triangles = num_triangles_to_render;
   for (int i = 0; i < num_triangles; i++) {
     triangle_t triangle = triangles_to_render[i];
     if (rendering_data.rm == RM_COLORED ||
@@ -355,8 +358,6 @@ void render(void) {
       draw_triangle(triangle, C_RED);
     }
   }
-  // Liberamos los triangulos.
-  array_free(triangles_to_render);
   // Copiamos color buffer al texture buffer y lo enviamos al renderer.
   render_color_buffer();
   // Limpiamos el color buffer.
