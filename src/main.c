@@ -18,6 +18,7 @@ rendering_data_t rendering_data;
 
 bool is_running;
 int previous_frame_time = 0;
+float delta_time = 0.0;
 mat4_t projection_matrix;
 mat4_t view_matrix;
 mat4_t world_matrix;
@@ -136,6 +137,10 @@ void update(void) {
   if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
     SDL_Delay(time_to_wait);
   }
+  // Delta time permite que si un juego va mas rapido, el incremento disminuya.
+  // Tambien permite que, al aplicar una transformacion, podamos entenderla como
+  // el movimiento en un segundo. No el movimiento en una milesima de segundo.
+  delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
   previous_frame_time = SDL_GetTicks();
 
   num_triangles_to_render = 0;
@@ -143,7 +148,7 @@ void update(void) {
   // Movemos, rotamos, escalamos, nuestra mesh.
   // Crearemos matrices a partir de estos valores para multiplicar cada matriz
   // con la world_matrix.
-  mesh.rotation.x += 0.015f;
+  // mesh.rotation.x += 0.015f;
   // mesh.rotation.y += 0.02f;
   // mesh.rotation.z += 0.02f;
 
@@ -155,7 +160,12 @@ void update(void) {
   mesh.translation.z = depth;
   // mesh.sheer.x += 0.01f;
 
-  camera.position.x += 0.008;
+  camera.position.x += 1.0 * delta_time;
+  camera.position.y += 1.0 * delta_time;
+
+  vec3_t target = {0, 0, depth};
+  vec3_t up = {0, 1, 0};
+  view_matrix = mat4_look_at(camera.position, target, up);
 
   // El orden importa, siempre aplicaremos antes:
   // 1. Scale.
@@ -199,9 +209,6 @@ void update(void) {
 
       world_matrix = mat4_identity();
 
-      vec3_t target = {0, 0, 10};
-      vec3_t up = {0, 1, 0};
-      view_matrix = mat4_look_at(camera.position, target, up);
       // world_matrix = mat4_mul_mat4(sheer_matrix_x, world_matrix);
       // world_matrix = mat4_mul_mat4(sheer_matrix_y, world_matrix);
       // world_matrix = mat4_mul_mat4(sheer_matrix_z, world_matrix);
