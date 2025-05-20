@@ -1,4 +1,5 @@
 #include "array.h"
+#include "camera.h"
 #include "colors.h"
 #include "display.h"
 #include "light.h"
@@ -18,6 +19,8 @@ rendering_data_t rendering_data;
 bool is_running;
 int previous_frame_time = 0;
 mat4_t projection_matrix;
+mat4_t view_matrix;
+mat4_t world_matrix;
 light_t light_source;
 
 int main(void) {
@@ -68,13 +71,13 @@ void setup(void) {
 
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  load_obj_file_data("./assets/drone.obj");
+  load_obj_file_data("./assets/f117.obj");
 
   // Cargar datos predefinidos en nuestra mesh.
   // load_cube_mesh_data();
 
   // Cargamos los datos de la texture en la memoria.
-  load_png_texture_data("./assets/drone.png");
+  load_png_texture_data("./assets/f117.png");
 }
 
 void get_input(void) {
@@ -152,6 +155,8 @@ void update(void) {
   mesh.translation.z = depth;
   // mesh.sheer.x += 0.01f;
 
+  camera.position.x += 0.008;
+
   // El orden importa, siempre aplicaremos antes:
   // 1. Scale.
   // 2. Rotation z,y,x.
@@ -192,8 +197,11 @@ void update(void) {
       // anteriormente. Y despues aplicaremos el resultado a los vertices.
       vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-      mat4_t world_matrix = mat4_identity();
+      world_matrix = mat4_identity();
 
+      vec3_t target = {0, 0, 10};
+      vec3_t up = {0, 1, 0};
+      view_matrix = mat4_look_at(camera.position, target, up);
       // world_matrix = mat4_mul_mat4(sheer_matrix_x, world_matrix);
       // world_matrix = mat4_mul_mat4(sheer_matrix_y, world_matrix);
       // world_matrix = mat4_mul_mat4(sheer_matrix_z, world_matrix);
@@ -204,7 +212,9 @@ void update(void) {
       world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
       world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
 
-      transformed_vertices[j] = mat4_mul_vec4(world_matrix, transformed_vertex);
+      transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
+      transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
+      transformed_vertices[j] = transformed_vertex;
     }
 
     // Backface culling
@@ -227,10 +237,13 @@ void update(void) {
       vec3_normalize(&normal);
 
       // Calculamos vector entre la camara y el punto que estamos chekeando.
-      vec3_t camera_ray = vec3_sub(camera_position, vector_a);
+      // UPDATE: cambiamos camera por origen, ya que el origen de nuestro mundo
+      // es la camara.
+      vec3_t origen = {0, 0, 0};
+      // vec3_t camera_ray = vec3_sub(origen, vector_a);
 
       // El dot product nos da el angulo entre dos vectores.
-      float angle = vec3_dot(normal, camera_ray);
+      float angle = vec3_dot(normal, origen);
 
       // Si el angulo es negativo o 0, no dibujaremos esa cara.
       if (angle < 0.0) {
