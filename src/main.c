@@ -41,7 +41,7 @@ int main(void) {
 
 void setup(void) {
   // Aplicamos default values de como queremos renderizar nuestros modelos.
-  rendering_data.rm = RM_COLORED;
+  rendering_data.rm = RM_TEXTURED;
   rendering_data.bc = BACKFACE_CULLING_ON;
   rendering_data.l = LIGHTS_OF;
   // Creamos un color_buffer con el tamaño de W*H*sizeof(pixel).
@@ -124,6 +124,28 @@ void get_input(void) {
       rendering_data.bc = BACKFACE_CULLING_ON;
       rendering_data.l = LIGHTS_ON;
     }
+
+    if (event.key.keysym.sym == SDLK_UP) {
+      camera.position.y += 3.0 * delta_time;
+    }
+    if (event.key.keysym.sym == SDLK_DOWN) {
+      camera.position.y -= 3.0 * delta_time;
+    }
+    if (event.key.keysym.sym == SDLK_a) {
+      camera.yaw += 1.0 * delta_time;
+    }
+    if (event.key.keysym.sym == SDLK_d) {
+      camera.yaw -= 1.0 * delta_time;
+    }
+    if (event.key.keysym.sym == SDLK_w) {
+      camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+      camera.position = vec3_add(camera.position, camera.forward_velocity);
+    }
+    if (event.key.keysym.sym == SDLK_s) {
+      camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
+      camera.position = vec3_sub(camera.position, camera.forward_velocity);
+    }
+
     break;
   }
 }
@@ -160,11 +182,17 @@ void update(void) {
   mesh.translation.z = depth;
   // mesh.sheer.x += 0.01f;
 
-  camera.position.x += 1.0 * delta_time;
-  camera.position.y += 1.0 * delta_time;
-
-  vec3_t target = {0, 0, depth};
   vec3_t up = {0, 1, 0};
+  // Me estaba rayando mucho con esto ya que pensaba, si la camara gira, porque
+  // coño tengo que calcular la rotacion de la target, se aplica la yaw y au, y
+  // eso se tendria en cuenta en la look at function. Pero no, el origen es la
+  // camara, pero el eje de coordenadas no cambia, por ello debemos rotar.
+  vec3_t target = {0, 0, 1};
+  mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw);
+  camera.direction = vec3_from_vec4(
+      mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
+  target = vec3_add(camera.position, camera.direction);
+
   view_matrix = mat4_look_at(camera.position, target, up);
 
   // El orden importa, siempre aplicaremos antes:
