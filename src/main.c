@@ -1,5 +1,6 @@
 #include "array.h"
 #include "camera.h"
+#include "clipping.h"
 #include "colors.h"
 #include "display.h"
 #include "light.h"
@@ -68,17 +69,19 @@ void setup(void) {
   float zfar = 100.0;
   projection_matrix = mat4_make_perspective(FOV, aspect, znear, zfar);
 
+  init_frustum_planes(FOV, znear, zfar);
+
   light_source = (light_t){.direction = {.x = 1000, .y = -200, .z = -1000}};
 
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  load_obj_file_data("./assets/f117.obj");
+  load_obj_file_data("./assets/cube.obj");
 
   // Cargar datos predefinidos en nuestra mesh.
   // load_cube_mesh_data();
 
   // Cargamos los datos de la texture en la memoria.
-  load_png_texture_data("./assets/f117.png");
+  load_png_texture_data("./assets/cube.png");
 }
 
 void get_input(void) {
@@ -217,6 +220,7 @@ void update(void) {
   // Los int representando el indice del vertice que forma la cara.
   int num_faces = array_length(mesh.faces);
   for (int i = 0; i < num_faces; i++) {
+
     // Extraemos los correspondientes vertices a cada indice.
     face_t face = mesh.faces[i];
     vec3_t face_vertices[3];
@@ -313,6 +317,14 @@ void update(void) {
     } else {
       final_color = mesh.faces[i].color;
     }
+
+    // Clipping!!
+    polygon_t polygon =
+        create_polygon_from_triangle(vec3_from_vec4(transformed_vertices[0]),
+                                     vec3_from_vec4(transformed_vertices[1]),
+                                     vec3_from_vec4(transformed_vertices[2]));
+    clip_polygon(&polygon);
+
     // Projection
     vec4_t projected_points[3];
     for (int j = 0; j < 3; j++) {
