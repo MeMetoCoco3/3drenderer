@@ -43,6 +43,11 @@ void vec2_normalize(vec2_t *v) {
   v->y /= length;
 }
 
+vec3_t vec3_clone(vec3_t *v) {
+  vec3_t res = {v->x, v->y, v->z};
+  return res;
+}
+
 vec3_t vec3_new(float x, float y, float z) {
   vec3_t res = {x, y, z};
   return res;
