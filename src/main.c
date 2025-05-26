@@ -220,7 +220,9 @@ void update(void) {
   // Los int representando el indice del vertice que forma la cara.
   int num_faces = array_length(mesh.faces);
   for (int i = 0; i < num_faces; i++) {
-
+    if (i != 4) {
+      continue;
+    }
     // Extraemos los correspondientes vertices a cada indice.
     face_t face = mesh.faces[i];
     vec3_t face_vertices[3];
@@ -308,6 +310,7 @@ void update(void) {
 
       // vec3_t light_ray = vec3_sub(light_source.direction, vector_a);
       float factor = vec3_dot(normal, light_source_direction);
+      // TODO: USE CLAMP FUNCTION
       if (factor < 0.2f)
         factor = 0.2f;
       if (factor > 1.0f)
@@ -325,48 +328,55 @@ void update(void) {
                                      vec3_from_vec4(transformed_vertices[2]));
     clip_polygon(&polygon);
 
-    // Projection
-    vec4_t projected_points[3];
-    for (int j = 0; j < 3; j++) {
-      // Multiplicamos los vectores por la matriz de projeccion.
-      // En la funcion aplicamos perspective divide.
-      // El resultado esta en un rango de -1 a 1 en x, y, z, llamado
-      // NDC(Normalized Device Coordinates).
-      projected_points[j] =
-          mat4_mul_vec4_project(projection_matrix, transformed_vertices[j]);
+    triangle_t triangles_after_clipping[MAX_NUM_POLYGON_TRIANGLES];
+    int num_triangles_after_clipping = 0;
+    triangles_from_polygon(&polygon, triangles_after_clipping,
+                           &num_triangles_after_clipping);
 
-      projected_points[j].y *= -1;
-      // Escalar a Screen Coordinates.
-      projected_points[j].x *= (window_width / 2.0);
-      projected_points[j].y *= (window_height / 2.0);
+    for (int t = 0; t < num_triangles_after_clipping; t++) {
+      triangle_t triangle_after_clipping = triangles_after_clipping[t];
+      // Projection
+      vec4_t projected_points[3];
+      for (int j = 0; j < 3; j++) {
+        // Multiplicamos los vectores por la matriz de projeccion.
+        // En la funcion aplicamos perspective divide.
+        // El resultado esta en un rango de -1 a 1 en x, y, z, llamado
+        // NDC(Normalized Device Coordinates).
+        projected_points[j] = mat4_mul_vec4_project(
+            projection_matrix, triangle_after_clipping.points[j]);
 
-      // Trasladar a Screen Coordinates.
-      projected_points[j].x += (window_width / 2.0);
-      projected_points[j].y += (window_height / 2.0);
-    }
+        projected_points[j].y *= -1;
+        // Escalar a Screen Coordinates.
+        projected_points[j].x *= (window_width / 2.0);
+        projected_points[j].y *= (window_height / 2.0);
 
-    triangle_t projected_triangle = {
-        .points =
-            {
-                {projected_points[0].x, projected_points[0].y,
-                 projected_points[0].z, projected_points[0].w},
-                {projected_points[1].x, projected_points[1].y,
-                 projected_points[1].z, projected_points[1].w},
-                {projected_points[2].x, projected_points[2].y,
-                 projected_points[2].z, projected_points[2].w},
-            },
+        // Trasladar a Screen Coordinates.
+        projected_points[j].x += (window_width / 2.0);
+        projected_points[j].y += (window_height / 2.0);
+      }
 
-        .textcoords = {{face.a_uv.u, face.a_uv.v},
-                       {face.b_uv.u, face.b_uv.v},
-                       {face.c_uv.u, face.c_uv.v}},
-        .color = final_color,
-    };
-    if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
-      triangles_to_render[num_triangles_to_render] = projected_triangle;
-      num_triangles_to_render++;
+      triangle_t triangle_to_render = {
+          .points =
+              {
+                  {projected_points[0].x, projected_points[0].y,
+                   projected_points[0].z, projected_points[0].w},
+                  {projected_points[1].x, projected_points[1].y,
+                   projected_points[1].z, projected_points[1].w},
+                  {projected_points[2].x, projected_points[2].y,
+                   projected_points[2].z, projected_points[2].w},
+              },
+
+          .textcoords = {{face.a_uv.u, face.a_uv.v},
+                         {face.b_uv.u, face.b_uv.v},
+                         {face.c_uv.u, face.c_uv.v}},
+          .color = final_color,
+      };
+      if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
+        triangles_to_render[num_triangles_to_render] = triangle_to_render;
+        num_triangles_to_render++;
+      }
     }
   }
-  // quick_sort(triangles_to_render, 0, array_length(triangles_to_render) - 1);
 }
 
 void render(void) {
