@@ -61,15 +61,18 @@ void setup(void) {
 
   // Matrix Projection.
   // FOV en radianes (equivalente a 60 grados).
-  float FOV = 3.14159 / 3;
+  float FOV_Y = 3.14159 / 3.0;
   // Ratio entre altura y ancho de pantalla.
-  float aspect = (float)window_height / (float)window_width;
+  float aspect_y = (float)window_height / (float)window_width;
+  float aspect_x = (float)window_width / (float)window_height;
+  //
+  float FOV_X = 2 * (atan(tan(FOV_Y / 2) * aspect_x));
   // Cuan cerca y cuan lejos podemos percibir nuestros objetos.
   float znear = 0.1;
   float zfar = 100.0;
-  projection_matrix = mat4_make_perspective(FOV, aspect, znear, zfar);
+  projection_matrix = mat4_make_perspective(FOV_Y, aspect_y, znear, zfar);
 
-  init_frustum_planes(FOV, znear, zfar);
+  init_frustum_planes(FOV_X, FOV_Y, znear, zfar);
 
   light_source = (light_t){.direction = {.x = 1000, .y = -200, .z = -1000}};
 
@@ -118,7 +121,8 @@ void get_input(void) {
     if (event.key.keysym.sym == SDLK_c) {
       rendering_data.bc = BACKFACE_CULLING_ON;
     }
-    if (event.key.keysym.sym == SDLK_d) {
+    if (event.key.keysym.sym == SDLK_b) {
+      // TODO: CHECK BACKFACE CULLING
       rendering_data.l = LIGHTS_OF;
       rendering_data.bc = BACKFACE_CULLING_OF;
     }
@@ -220,9 +224,6 @@ void update(void) {
   // Los int representando el indice del vertice que forma la cara.
   int num_faces = array_length(mesh.faces);
   for (int i = 0; i < num_faces; i++) {
-    if (i != 4) {
-      continue;
-    }
     // Extraemos los correspondientes vertices a cada indice.
     face_t face = mesh.faces[i];
     vec3_t face_vertices[3];
@@ -325,11 +326,13 @@ void update(void) {
     polygon_t polygon =
         create_polygon_from_triangle(vec3_from_vec4(transformed_vertices[0]),
                                      vec3_from_vec4(transformed_vertices[1]),
-                                     vec3_from_vec4(transformed_vertices[2]));
+                                     vec3_from_vec4(transformed_vertices[2]),
+                                     face.a_uv, face.b_uv, face.c_uv);
     clip_polygon(&polygon);
 
     triangle_t triangles_after_clipping[MAX_NUM_POLYGON_TRIANGLES];
     int num_triangles_after_clipping = 0;
+
     triangles_from_polygon(&polygon, triangles_after_clipping,
                            &num_triangles_after_clipping);
 
@@ -356,21 +359,20 @@ void update(void) {
       }
 
       triangle_t triangle_to_render = {
-          .points =
-              {
-                  {projected_points[0].x, projected_points[0].y,
-                   projected_points[0].z, projected_points[0].w},
-                  {projected_points[1].x, projected_points[1].y,
-                   projected_points[1].z, projected_points[1].w},
-                  {projected_points[2].x, projected_points[2].y,
-                   projected_points[2].z, projected_points[2].w},
-              },
+          .points = {{projected_points[0].x, projected_points[0].y,
+                      projected_points[0].z, projected_points[0].w},
+                     {projected_points[1].x, projected_points[1].y,
+                      projected_points[1].z, projected_points[1].w},
+                     {projected_points[2].x, projected_points[2].y,
+                      projected_points[2].z, projected_points[2].w}},
+          .textcoords = {{triangle_after_clipping.textcoords[0].u,
+                          triangle_after_clipping.textcoords[0].v},
+                         {triangle_after_clipping.textcoords[1].u,
+                          triangle_after_clipping.textcoords[1].v},
+                         {triangle_after_clipping.textcoords[2].u,
+                          triangle_after_clipping.textcoords[2].v}},
+          .color = final_color};
 
-          .textcoords = {{face.a_uv.u, face.a_uv.v},
-                         {face.b_uv.u, face.b_uv.v},
-                         {face.c_uv.u, face.c_uv.v}},
-          .color = final_color,
-      };
       if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
         triangles_to_render[num_triangles_to_render] = triangle_to_render;
         num_triangles_to_render++;
