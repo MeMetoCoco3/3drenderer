@@ -131,6 +131,14 @@ int clamp(int value, int min, int max) {
   return value;
 }
 
+float clamp_f(float value, float min, float max) {
+  if (value < min)
+    return min;
+  if (value > max)
+    return max;
+  return value;
+}
+
 /* vec2_t project(vec3_t point) { */
 /*   vec2_t point_2d = {.x = point.x * fov_factor, .y = point.y * fov_factor};
  */

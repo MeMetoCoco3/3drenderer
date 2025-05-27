@@ -30,17 +30,18 @@ typedef struct {
   enum LIGHTS l;
 } rendering_data_t;
 
-extern SDL_Window *window;
-extern SDL_Renderer *renderer;
-
-extern uint32_t *color_buffer;
-extern float *z_buffer;
-extern SDL_Texture *color_buffer_texture;
-
-extern int window_height;
-extern int window_width;
-
 bool init_window(void);
+int get_window_width(void);
+int get_window_height(void);
+void set_render_method(enum RENDERING_MODES t);
+void set_cull_method(enum BACKFACE_CULLING t);
+void set_light(enum LIGHTS t);
+bool is_cull_backface(void);
+bool is_lights_on(void);
+bool should_render_filled_triangles(void);
+bool should_render_textured_triangles(void);
+bool should_render_vertex(void);
+bool should_render_wireframe(void);
 void setup(void);
 void get_input(void);
 void update(void);
@@ -57,4 +58,7 @@ void draw_rectangle_lines(int vx, int vy, int width, int height,
 void draw_grid(uint32_t);
 void draw_grid_points(uint32_t);
 void draw_rectangle(int vx, int vy, int width, int height, uint32_t color);
+
+float get_zbuffer_at(int x, int y);
+void update_zbuffer_at(int x, int y, float value);
 #endif

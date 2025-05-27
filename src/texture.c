@@ -10,6 +10,7 @@ tex2_t tex2_clone(tex2_t *t) {
   tex2_t result = {t->u, t->v};
   return result;
 }
+
 void load_png_texture_data(char *filename) {
   png_texture = upng_new_from_file(filename);
   if (png_texture != NULL) {

@@ -15,7 +15,6 @@
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
 int num_triangles_to_render;
-rendering_data_t rendering_data;
 
 bool is_running;
 int previous_frame_time = 0;
@@ -23,7 +22,6 @@ float delta_time = 0.0;
 mat4_t projection_matrix;
 mat4_t view_matrix;
 mat4_t world_matrix;
-light_t light_source;
 
 int main(void) {
   is_running = init_window();
@@ -42,118 +40,117 @@ int main(void) {
 
 void setup(void) {
   // Aplicamos default values de como queremos renderizar nuestros modelos.
-  rendering_data.rm = RM_TEXTURED;
-  rendering_data.bc = BACKFACE_CULLING_ON;
-  rendering_data.l = LIGHTS_OF;
-  // Creamos un color_buffer con el tamaño de W*H*sizeof(pixel).
-  color_buffer =
-      (uint32_t *)malloc(sizeof(uint32_t) * window_width * window_height);
-  z_buffer = (float *)malloc(sizeof(float) * window_width * window_height);
-  // Creamos una textura donde copiaremos el color buffer.
-  // Esta textura sera interpretada por el renderer.
-  // Pixel Format = AARRGGBB;
-  // Lo cambie ya que las texturas estan codificadas en RGBA format.
-  // Text Access straming = Recurriremos a este bloque de memoria
-  // constantemente.
-  color_buffer_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA32,
-                                           SDL_TEXTUREACCESS_STREAMING,
-                                           window_width, window_height);
+  set_render_method(RM_TEXTURED);
+  set_cull_method(BACKFACE_CULLING_ON);
+  set_light(LIGHTS_ON);
+
+  init_light(vec3_new(0, 0, -1));
 
   // Matrix Projection.
   // FOV en radianes (equivalente a 60 grados).
+  float aspect_y = (float)get_window_height() / (float)get_window_width();
   float FOV_Y = 3.14159 / 3.0;
-  // Ratio entre altura y ancho de pantalla.
-  float aspect_y = (float)window_height / (float)window_width;
-  float aspect_x = (float)window_width / (float)window_height;
-  //
+  float aspect_x = (float)get_window_width() / (float)get_window_height();
   float FOV_X = 2 * (atan(tan(FOV_Y / 2) * aspect_x));
-  // Cuan cerca y cuan lejos podemos percibir nuestros objetos.
   float znear = 0.1;
   float zfar = 100.0;
   projection_matrix = mat4_make_perspective(FOV_Y, aspect_y, znear, zfar);
 
   init_frustum_planes(FOV_X, FOV_Y, znear, zfar);
 
-  light_source = (light_t){.direction = {.x = 1000, .y = -200, .z = -1000}};
-
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  load_obj_file_data("./assets/cube.obj");
-
-  // Cargar datos predefinidos en nuestra mesh.
-  // load_cube_mesh_data();
+  load_obj_file_data("./assets/crab.obj");
 
   // Cargamos los datos de la texture en la memoria.
-  load_png_texture_data("./assets/cube.png");
+  load_png_texture_data("./assets/crab.png");
 }
 
 void get_input(void) {
   // Estructura encargada de lidiar con todos los eventos de nuestro SO.
   // Utilizado para lidiar con keyboard input.
   SDL_Event event;
-  SDL_PollEvent(&event);
-  switch (event.type) {
-  case SDL_QUIT:
-    is_running = false;
-    break;
-  case SDL_KEYDOWN:
-    if (event.key.keysym.sym == SDLK_ESCAPE) {
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+    case SDL_QUIT:
       is_running = false;
-    }
-    if (event.key.keysym.sym == SDLK_KP_1) {
-      rendering_data.rm = RM_WIREFRAME;
-    }
-    if (event.key.keysym.sym == SDLK_KP_2) {
-      rendering_data.rm = RM_WIREFRAME_VERTEX;
-    }
-    if (event.key.keysym.sym == SDLK_KP_3) {
-      rendering_data.rm = RM_COLORED;
-    }
-    if (event.key.keysym.sym == SDLK_KP_4) {
-      rendering_data.rm = RM_COLORED_LINES;
-    }
-    if (event.key.keysym.sym == SDLK_KP_5) {
-      rendering_data.rm = RM_TEXTURED;
-    }
-    if (event.key.keysym.sym == SDLK_KP_6) {
-      rendering_data.rm = RM_TEXTURED_WIRE;
-    }
-    if (event.key.keysym.sym == SDLK_c) {
-      rendering_data.bc = BACKFACE_CULLING_ON;
-    }
-    if (event.key.keysym.sym == SDLK_b) {
-      // TODO: CHECK BACKFACE CULLING
-      rendering_data.l = LIGHTS_OF;
-      rendering_data.bc = BACKFACE_CULLING_OF;
-    }
-    if (event.key.keysym.sym == SDLK_k) {
-      printf("LIGHTS ON");
-      rendering_data.bc = BACKFACE_CULLING_ON;
-      rendering_data.l = LIGHTS_ON;
-    }
+      break;
+    case SDL_KEYDOWN:
+      if (event.key.keysym.sym == SDLK_ESCAPE) {
+        is_running = false;
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_KP_1) {
+        set_render_method(RM_WIREFRAME);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_KP_2) {
+        set_render_method(RM_WIREFRAME_VERTEX);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_KP_3) {
+        set_render_method(RM_COLORED);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_KP_4) {
+        set_render_method(RM_COLORED_LINES);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_KP_5) {
+        set_render_method(RM_TEXTURED);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_KP_6) {
+        set_render_method(RM_TEXTURED_WIRE);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_c) {
+        set_cull_method(BACKFACE_CULLING_ON);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_b) {
+        set_light(LIGHTS_OF);
+        set_cull_method(BACKFACE_CULLING_OF);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_k) {
+        set_cull_method(BACKFACE_CULLING_ON);
+        set_light(LIGHTS_ON);
+        break;
+      }
 
-    if (event.key.keysym.sym == SDLK_UP) {
-      camera.position.y += 3.0 * delta_time;
+      if (event.key.keysym.sym == SDLK_UP) {
+        set_camera_forward_velocity(
+            vec3_mul(get_camera_direction(), 5.0 * delta_time));
+        set_camera_position(
+            vec3_add(get_camera_position(), get_camera_forward_velocity()));
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_DOWN) {
+        set_camera_forward_velocity(
+            vec3_mul(get_camera_direction(), 5.0 * delta_time));
+        set_camera_position(
+            vec3_sub(get_camera_position(), get_camera_forward_velocity()));
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_a) {
+        rotate_camera_yaw(+1.0 * delta_time);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_d) {
+        rotate_camera_yaw(-1.0 * delta_time);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_w) {
+        rotate_camera_pitch(+1.0 * delta_time);
+        break;
+      }
+      if (event.key.keysym.sym == SDLK_s) {
+        rotate_camera_pitch(-1.0 * delta_time);
+        break;
+      }
+      break;
     }
-    if (event.key.keysym.sym == SDLK_DOWN) {
-      camera.position.y -= 3.0 * delta_time;
-    }
-    if (event.key.keysym.sym == SDLK_a) {
-      camera.yaw += 1.0 * delta_time;
-    }
-    if (event.key.keysym.sym == SDLK_d) {
-      camera.yaw -= 1.0 * delta_time;
-    }
-    if (event.key.keysym.sym == SDLK_w) {
-      camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
-      camera.position = vec3_add(camera.position, camera.forward_velocity);
-    }
-    if (event.key.keysym.sym == SDLK_s) {
-      camera.forward_velocity = vec3_mul(camera.direction, 5.0 * delta_time);
-      camera.position = vec3_sub(camera.position, camera.forward_velocity);
-    }
-
-    break;
   }
 }
 
@@ -166,9 +163,10 @@ void update(void) {
   if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
     SDL_Delay(time_to_wait);
   }
-  // Delta time permite que si un juego va mas rapido, el incremento disminuya.
-  // Tambien permite que, al aplicar una transformacion, podamos entenderla como
-  // el movimiento en un segundo. No el movimiento en una milesima de segundo.
+  // Delta time permite que si un juego va mas rapido, el incremento
+  // disminuya. Tambien permite que, al aplicar una transformacion, podamos
+  // entenderla como el movimiento en un segundo. No el movimiento en una
+  // milesima de segundo.
   delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
   previous_frame_time = SDL_GetTicks();
 
@@ -189,18 +187,15 @@ void update(void) {
   mesh.translation.z = depth;
   // mesh.sheer.x += 0.01f;
 
-  vec3_t up = {0, 1, 0};
-  // Me estaba rayando mucho con esto ya que pensaba, si la camara gira, porque
-  // coño tengo que calcular la rotacion de la target, se aplica la yaw y au, y
-  // eso se tendria en cuenta en la look at function. Pero no, el origen es la
-  // camara, pero el eje de coordenadas no cambia, por ello debemos rotar.
-  vec3_t target = {0, 0, 1};
-  mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw);
-  camera.direction = vec3_from_vec4(
-      mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
-  target = vec3_add(camera.position, camera.direction);
+  // Me estaba rayando mucho con esto ya que pensaba, si la camara gira,
+  // porque coño tengo que calcular la rotacion de la target, se aplica la yaw
+  // y au, y eso se tendria en cuenta en la look at function. Pero no, el
+  // origen es la camara, pero el eje de coordenadas no cambia, por ello
+  // debemos rotar.
+  vec3_t up_direction = vec3_new(0, 1, 0);
+  vec3_t target = get_camera_lookat_target();
 
-  view_matrix = mat4_look_at(camera.position, target, up);
+  view_matrix = mat4_look_at(get_camera_position(), target, up_direction);
 
   // El orden importa, siempre aplicaremos antes:
   // 1. Scale.
@@ -233,8 +228,8 @@ void update(void) {
     face_vertices[2] = mesh.vertices[face.c];
 
     // Transformamos los vertices.
-    // Como algunas operaciones como translation, o la conservacion del valor Z
-    // de cada punto requieren de una matriz n+1, trabajaremos con vec4_t.
+    // Como algunas operaciones como translation, o la conservacion del valor
+    // Z de cada punto requieren de una matriz n+1, trabajaremos con vec4_t.
     vec4_t transformed_vertices[3];
     // Transformation
     for (int j = 0; j < 3; j++) {
@@ -243,10 +238,6 @@ void update(void) {
       vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
       world_matrix = mat4_identity();
-
-      // world_matrix = mat4_mul_mat4(sheer_matrix_x, world_matrix);
-      // world_matrix = mat4_mul_mat4(sheer_matrix_y, world_matrix);
-      // world_matrix = mat4_mul_mat4(sheer_matrix_z, world_matrix);
 
       world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
       world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
@@ -263,7 +254,7 @@ void update(void) {
     // Algoritmo encargado de decidir si las caras deben ser dibujadas o no,
     // basandonos en el angulo que el normal, de una cara forma con nuestra
     // camara.
-    if (rendering_data.bc == BACKFACE_CULLING_ON) {
+    if (is_cull_backface()) {
       vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
       vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
       vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
@@ -273,14 +264,15 @@ void update(void) {
       vec3_t vector_ac = vec3_sub(vector_c, vector_a);
       vec3_normalize(&vector_ab);
       vec3_normalize(&vector_ac);
-      // El CrossProduct the dos vectores nos da un tercer vector perpendicular
-      // a estos, o la normal de la cara formada por dichos vectores.
+      // El CrossProduct the dos vectores nos da un tercer vector
+      // perpendicular a estos, o la normal de la cara formada por dichos
+      // vectores.
       vec3_t normal = vec3_cross(vector_ab, vector_ac);
       vec3_normalize(&normal);
 
       // Calculamos vector entre la camara y el punto que estamos chekeando.
-      // UPDATE: cambiamos camera por origen, ya que el origen de nuestro mundo
-      // es la camara.
+      // UPDATE: cambiamos camera por origen, ya que el origen de nuestro
+      // mundo es la camara.
       vec3_t origen = {0, 0, 0};
       // vec3_t camera_ray = vec3_sub(origen, vector_a);
 
@@ -294,7 +286,7 @@ void update(void) {
     }
 
     // Calculate new colors with light
-    if (rendering_data.l == LIGHTS_ON) {
+    if (is_lights_on()) {
       vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
       vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
       vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
@@ -305,18 +297,21 @@ void update(void) {
       vec3_normalize(&vector_ac);
 
       vec3_t normal = vec3_cross(vector_ab, vector_ac);
-      vec3_t light_source_direction = light_source.direction;
+      vec3_t light_source_direction = get_light_direction();
       vec3_normalize(&light_source_direction);
       vec3_normalize(&normal);
 
-      // vec3_t light_ray = vec3_sub(light_source.direction, vector_a);
       float factor = vec3_dot(normal, light_source_direction);
-      // TODO: USE CLAMP FUNCTION
-      if (factor < 0.2f)
-        factor = 0.2f;
-      if (factor > 1.0f)
-        factor = 1.0f;
 
+      // TODO: USE CLAMP FUNCTION
+      if (factor < 0.2f) {
+        factor = 0.2f;
+      }
+      if (factor > 1.0f) {
+        factor = 1.0f;
+      }
+
+      factor = clamp_f(factor, 0.2f, 1.0f);
       final_color = light_apply_intensity(mesh.faces[i].color, factor);
     } else {
       final_color = mesh.faces[i].color;
@@ -350,12 +345,12 @@ void update(void) {
 
         projected_points[j].y *= -1;
         // Escalar a Screen Coordinates.
-        projected_points[j].x *= (window_width / 2.0);
-        projected_points[j].y *= (window_height / 2.0);
+        projected_points[j].x *= (get_window_width() / 2.0);
+        projected_points[j].y *= (get_window_height() / 2.0);
 
         // Trasladar a Screen Coordinates.
-        projected_points[j].x += (window_width / 2.0);
-        projected_points[j].y += (window_height / 2.0);
+        projected_points[j].x += (get_window_width() / 2.0);
+        projected_points[j].y += (get_window_height() / 2.0);
       }
 
       triangle_t triangle_to_render = {
@@ -382,17 +377,18 @@ void update(void) {
 }
 
 void render(void) {
-  SDL_RenderClear(renderer);
+  // SDL_RenderClear(renderer);
 
-  // Dibujamos grid.
+  // Limpiamos el color buffer.
+  clear_color_buffer(C_BLACK);
+  clear_z_buffer();
   draw_grid_points(C_GUNMETAL);
 
   // Loopeamos los triangulos a renderizar y los dibujamos.
   int num_triangles = num_triangles_to_render;
   for (int i = 0; i < num_triangles; i++) {
     triangle_t triangle = triangles_to_render[i];
-    if (rendering_data.rm == RM_COLORED ||
-        rendering_data.rm == RM_COLORED_LINES) {
+    if (should_render_filled_triangles()) {
 
       draw_filled_triangle(
           triangle.points[0].x, triangle.points[0].y, triangle.points[0].z,
@@ -402,14 +398,13 @@ void render(void) {
           triangle.color);
     }
 
-    if (rendering_data.rm == RM_WIREFRAME_VERTEX) {
+    if (should_render_vertex()) {
       draw_rectangle(triangle.points[0].x, triangle.points[0].y, 3, 3, C_RED);
       draw_rectangle(triangle.points[1].x, triangle.points[1].y, 3, 3, C_RED);
       draw_rectangle(triangle.points[2].x, triangle.points[2].y, 3, 3, C_RED);
     }
 
-    if (rendering_data.rm == RM_TEXTURED ||
-        rendering_data.rm == RM_TEXTURED_WIRE) {
+    if (should_render_textured_triangles()) {
       draw_textured_triangle(
           triangle.points[0].x, triangle.points[0].y, triangle.points[0].z,
           triangle.points[0].w, triangle.textcoords[0].u,
@@ -423,18 +418,10 @@ void render(void) {
           mesh_texture);
     }
 
-    if (rendering_data.rm == RM_COLORED_LINES ||
-        rendering_data.rm == RM_WIREFRAME ||
-        rendering_data.rm == RM_WIREFRAME_VERTEX ||
-        rendering_data.rm == RM_TEXTURED_WIRE) {
+    if (should_render_wireframe()) {
       draw_triangle(triangle, C_RED);
     }
   }
   // Copiamos color buffer al texture buffer y lo enviamos al renderer.
   render_color_buffer();
-  // Limpiamos el color buffer.
-  clear_color_buffer(C_BLACK);
-  clear_z_buffer();
-  // Actualizamos la pantalla.
-  SDL_RenderPresent(renderer);
 }

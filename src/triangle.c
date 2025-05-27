@@ -38,13 +38,13 @@ void draw_texel(int x, int y, vec4_t point_a, vec4_t point_b, vec4_t point_c,
   // interpolated_reciprocal_w es un valor mayor conforme se acerca a znear, por
   interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
 
-  if (interpolated_reciprocal_w < z_buffer[x + (window_width * y)]) {
+  if (interpolated_reciprocal_w < get_zbuffer_at(x, y)) {
     // Escalamos U y V al tamaño de la textura.
     int text_x = abs((int)(interpolated_u * texture_width)) % texture_width;
     int text_y = abs((int)(interpolated_v * texture_height)) % texture_height;
 
     draw_pixel(x, y, texture[(texture_width * text_y) + text_x]);
-    z_buffer[x + (window_width * y)] = interpolated_reciprocal_w;
+    update_zbuffer_at(x, y, interpolated_reciprocal_w);
   }
 }
 
@@ -67,9 +67,9 @@ void draw_triangle_pixel(int x, int y, vec4_t point_a, vec4_t point_b,
 
   interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
 
-  if (interpolated_reciprocal_w < z_buffer[x + y * window_width]) {
+  if (interpolated_reciprocal_w < get_zbuffer_at(x, y)) {
     draw_pixel(x, y, color);
-    z_buffer[x + y * window_width] = interpolated_reciprocal_w;
+    update_zbuffer_at(x, y, interpolated_reciprocal_w);
   }
 }
 

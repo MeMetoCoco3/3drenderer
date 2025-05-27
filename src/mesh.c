@@ -143,8 +143,6 @@ void load_obj_file_data(char *file_name) {
 }
 
 void free_resources(void) {
-  free(color_buffer);
-  free(z_buffer);
   upng_free(png_texture);
   array_free(mesh.faces);
   array_free(mesh.vertices);
