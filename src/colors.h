@@ -12,5 +12,4 @@
 #define C_MAGNOLIA 0xFFE4DEE4
 #define C_FACE_DEFAULT 0xFFFF9F1C
 
-uint32_t light_apply_intensity(uint32_t original_color, float factor);
 #endif

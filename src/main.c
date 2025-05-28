@@ -1,3 +1,4 @@
+#include "main.h"
 #include "array.h"
 #include "camera.h"
 #include "clipping.h"
@@ -5,7 +6,6 @@
 #include "display.h"
 #include "light.h"
 #include "matrix.h"
-#include "mesh.h"
 #include "sort.h"
 #include "triangle.h"
 #include "upng.h"
@@ -33,16 +33,15 @@ int main(void) {
     update();
     render();
   }
-  destroy_window();
   free_resources();
   return 0;
 }
 
 void setup(void) {
   // Aplicamos default values de como queremos renderizar nuestros modelos.
-  set_render_method(RM_TEXTURED);
+  set_render_method(RM_COLORED_LINES);
   set_cull_method(BACKFACE_CULLING_ON);
-  set_light(LIGHTS_ON);
+  set_light(LIGHTS_OF);
 
   init_light(vec3_new(0, 0, -1));
 
@@ -60,10 +59,11 @@ void setup(void) {
 
   // Estas dos funciones se encargan de:
   // Cargar objetos en nuestra mesh.
-  load_obj_file_data("./assets/crab.obj");
+  load_mesh("./assets/crab.obj", "./assets/crab.png", vec3_new(1, 1, 1),
+            vec3_new(-1.3, 0, +8), vec3_new(0, 0, 0));
 
-  // Cargamos los datos de la texture en la memoria.
-  load_png_texture_data("./assets/crab.png");
+  load_mesh("./assets/heart.obj", "./assets/crab.png", vec3_new(1, 1, 1),
+            vec3_new(1.3, 0, +8), vec3_new(0, 2.6, 0));
 }
 
 void get_input(void) {
@@ -154,48 +154,15 @@ void get_input(void) {
   }
 }
 
-void update(void) {
-
-  // Deltatime.
-  // Definimos cuantos ticks tenemos que esperar para que los frames no
-  // se dibujen mas rapido de lo que deberian.
-  int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
-  if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
-    SDL_Delay(time_to_wait);
-  }
-  // Delta time permite que si un juego va mas rapido, el incremento
-  // disminuya. Tambien permite que, al aplicar una transformacion, podamos
-  // entenderla como el movimiento en un segundo. No el movimiento en una
-  // milesima de segundo.
-  delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
-  previous_frame_time = SDL_GetTicks();
-
-  num_triangles_to_render = 0;
-
-  // Movemos, rotamos, escalamos, nuestra mesh.
-  // Crearemos matrices a partir de estos valores para multiplicar cada matriz
-  // con la world_matrix.
-  // mesh.rotation.x += 0.015f;
+void process_graphics_pipeline_stages(mesh_t *mesh) {
   // mesh.rotation.y += 0.02f;
-  // mesh.rotation.z += 0.02f;
-
-  // mesh.scale.x += 0.001f;
   // mesh.scale.y += 0.001f;
-
-  // mesh.translation.x += 0.01f;
-  // mesh.translation.y += 0.01f;
-  mesh.translation.z = depth;
-  // mesh.sheer.x += 0.01f;
 
   // Me estaba rayando mucho con esto ya que pensaba, si la camara gira,
   // porque coño tengo que calcular la rotacion de la target, se aplica la yaw
   // y au, y eso se tendria en cuenta en la look at function. Pero no, el
   // origen es la camara, pero el eje de coordenadas no cambia, por ello
   // debemos rotar.
-  vec3_t up_direction = vec3_new(0, 1, 0);
-  vec3_t target = get_camera_lookat_target();
-
-  view_matrix = mat4_look_at(get_camera_position(), target, up_direction);
 
   // El orden importa, siempre aplicaremos antes:
   // 1. Scale.
@@ -203,35 +170,28 @@ void update(void) {
   // 3. Translation.
   // 0. Sheer debe ser aplicado antes o despues que scale.
   mat4_t scale_matrix =
-      mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+      mat4_make_scale(mesh->scale.x, mesh->scale.y, mesh->scale.z);
   mat4_t translation_matrix = mat4_make_translation(
-      mesh.translation.x, mesh.translation.y, mesh.translation.z);
-  mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh.rotation.x);
-  mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh.rotation.y);
-  mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh.rotation.z);
+      mesh->translation.x, mesh->translation.y, mesh->translation.z);
+  mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh->rotation.x);
+  mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh->rotation.y);
+  mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh->rotation.z);
 
-  // mat4_t sheer_matrix_x = mat4_make_shear_x(mesh.sheer.y, mesh.sheer.z);
-  // mat4_t sheer_matrix_y = mat4_make_shear_y(mesh.sheer.x, mesh.sheer.z);
-  // mat4_t sheer_matrix_z = mat4_make_shear_z(mesh.sheer.x, mesh.sheer.y);
+  vec3_t target = get_camera_lookat_target();
+  vec3_t up_direction = vec3_new(0, 1, 0);
+  view_matrix = mat4_look_at(get_camera_position(), target, up_direction);
 
-  // Loopeamos entre todas nuestras caras.
-  // Cada cara tiene 3 int, y 1 color.
-  // Los int representando el indice del vertice que forma la cara.
-  int num_faces = array_length(mesh.faces);
+  int num_faces = array_length(mesh->faces);
   for (int i = 0; i < num_faces; i++) {
-    // Extraemos los correspondientes vertices a cada indice.
-    face_t face = mesh.faces[i];
+    face_t face = mesh->faces[i];
     vec3_t face_vertices[3];
-    uint32_t final_color;
-    face_vertices[0] = mesh.vertices[face.a];
-    face_vertices[1] = mesh.vertices[face.b];
-    face_vertices[2] = mesh.vertices[face.c];
+    // TODO:REPASAR ESTA INDEXACION YA QUE LAS FACES SE SUELEN HACER CON
+    // INDICE 1
+    face_vertices[0] = mesh->vertices[face.a];
+    face_vertices[1] = mesh->vertices[face.b];
+    face_vertices[2] = mesh->vertices[face.c];
 
-    // Transformamos los vertices.
-    // Como algunas operaciones como translation, o la conservacion del valor
-    // Z de cada punto requieren de una matriz n+1, trabajaremos con vec4_t.
     vec4_t transformed_vertices[3];
-    // Transformation
     for (int j = 0; j < 3; j++) {
       // Creamos una matriz mundo, le aplicamos todas las matrices declaradas
       // anteriormente. Y despues aplicaremos el resultado a los vertices.
@@ -250,71 +210,21 @@ void update(void) {
       transformed_vertices[j] = transformed_vertex;
     }
 
+    vec3_t face_normal = get_triangle_normal(transformed_vertices);
     // Backface culling
-    // Algoritmo encargado de decidir si las caras deben ser dibujadas o no,
-    // basandonos en el angulo que el normal, de una cara forma con nuestra
-    // camara.
     if (is_cull_backface()) {
-      vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
-      vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
-      vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
 
-      // Sacamos la direccion de dos vectores con mismo origen de la cara.
-      vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-      vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-      vec3_normalize(&vector_ab);
-      vec3_normalize(&vector_ac);
-      // El CrossProduct the dos vectores nos da un tercer vector
-      // perpendicular a estos, o la normal de la cara formada por dichos
-      // vectores.
-      vec3_t normal = vec3_cross(vector_ab, vector_ac);
-      vec3_normalize(&normal);
-
-      // Calculamos vector entre la camara y el punto que estamos chekeando.
-      // UPDATE: cambiamos camera por origen, ya que el origen de nuestro
-      // mundo es la camara.
       vec3_t origen = {0, 0, 0};
-      // vec3_t camera_ray = vec3_sub(origen, vector_a);
+      vec3_t camera_ray =
+          vec3_sub(vec3_new(0, 0, 0), vec3_from_vec4(transformed_vertices[0]));
 
       // El dot product nos da el angulo entre dos vectores.
-      float angle = vec3_dot(normal, origen);
+      float angle = vec3_dot(face_normal, camera_ray);
 
       // Si el angulo es negativo o 0, no dibujaremos esa cara.
       if (angle < 0.0) {
         continue;
       }
-    }
-
-    // Calculate new colors with light
-    if (is_lights_on()) {
-      vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
-      vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
-      vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
-
-      vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-      vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-      vec3_normalize(&vector_ab);
-      vec3_normalize(&vector_ac);
-
-      vec3_t normal = vec3_cross(vector_ab, vector_ac);
-      vec3_t light_source_direction = get_light_direction();
-      vec3_normalize(&light_source_direction);
-      vec3_normalize(&normal);
-
-      float factor = vec3_dot(normal, light_source_direction);
-
-      // TODO: USE CLAMP FUNCTION
-      if (factor < 0.2f) {
-        factor = 0.2f;
-      }
-      if (factor > 1.0f) {
-        factor = 1.0f;
-      }
-
-      factor = clamp_f(factor, 0.2f, 1.0f);
-      final_color = light_apply_intensity(mesh.faces[i].color, factor);
-    } else {
-      final_color = mesh.faces[i].color;
     }
 
     // Clipping!!
@@ -353,6 +263,21 @@ void update(void) {
         projected_points[j].y += (get_window_height() / 2.0);
       }
 
+      uint32_t final_color = mesh->faces[i].color;
+      if (is_lights_on()) {
+        vec3_normalize(&face_normal);
+
+        vec3_t light_dir = get_light_direction();
+        vec3_normalize(&light_dir);
+
+        float light_intensity_factor = vec3_dot(face_normal, light_dir);
+
+        light_intensity_factor = clamp_f(light_intensity_factor, 0.2f, 1.0f);
+
+        final_color =
+            light_apply_intensity(mesh->faces[i].color, light_intensity_factor);
+      }
+
       triangle_t triangle_to_render = {
           .points = {{projected_points[0].x, projected_points[0].y,
                       projected_points[0].z, projected_points[0].w},
@@ -366,13 +291,31 @@ void update(void) {
                           triangle_after_clipping.textcoords[1].v},
                          {triangle_after_clipping.textcoords[2].u,
                           triangle_after_clipping.textcoords[2].v}},
-          .color = final_color};
+          .color = final_color,
+          .texture = mesh->texture};
 
       if (num_triangles_to_render < MAX_TRIANGLES_PER_MESH) {
         triangles_to_render[num_triangles_to_render] = triangle_to_render;
         num_triangles_to_render++;
       }
     }
+  }
+}
+
+void update(void) {
+
+  int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
+  if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME) {
+    SDL_Delay(time_to_wait);
+  }
+
+  delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
+  previous_frame_time = SDL_GetTicks();
+
+  num_triangles_to_render = 0;
+  for (int mesh_index = 0; mesh_index < get_num_meshes(); mesh_index++) {
+    mesh_t *mesh = get_mesh(mesh_index);
+    process_graphics_pipeline_stages(mesh);
   }
 }
 
@@ -415,13 +358,19 @@ void render(void) {
           triangle.points[2].x, triangle.points[2].y, triangle.points[2].z,
           triangle.points[2].w, triangle.textcoords[2].u,
           triangle.textcoords[2].v, // vertex C
-          mesh_texture);
+          triangle.texture);
     }
 
     if (should_render_wireframe()) {
       draw_triangle(triangle, C_RED);
     }
   }
+
   // Copiamos color buffer al texture buffer y lo enviamos al renderer.
   render_color_buffer();
+}
+
+void free_resources(void) {
+  free_meshes();
+  destroy_window();
 }

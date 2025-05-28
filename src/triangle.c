@@ -3,8 +3,9 @@
 #include "sort.h"
 #include "vector.h"
 
-void draw_texel(int x, int y, vec4_t point_a, vec4_t point_b, vec4_t point_c,
-                tex2_t a_uv, tex2_t b_uv, tex2_t c_uv, u_int32_t *texture) {
+void draw_triangle_texel(int x, int y, vec4_t point_a, vec4_t point_b,
+                         vec4_t point_c, tex2_t a_uv, tex2_t b_uv, tex2_t c_uv,
+                         upng_t *texture) {
 
   vec2_t a = vec2_from_vec4(point_a);
   vec2_t b = vec2_from_vec4(point_b);
@@ -35,15 +36,17 @@ void draw_texel(int x, int y, vec4_t point_a, vec4_t point_b, vec4_t point_c,
   interpolated_u /= interpolated_reciprocal_w;
   interpolated_v /= interpolated_reciprocal_w;
 
-  // interpolated_reciprocal_w es un valor mayor conforme se acerca a znear, por
+  int texture_width = upng_get_width(texture);
+  int texture_height = upng_get_width(texture);
+
+  int text_x = abs((int)(interpolated_u * texture_width)) % texture_width;
+  int text_y = abs((int)(interpolated_v * texture_height)) % texture_height;
+
   interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
 
   if (interpolated_reciprocal_w < get_zbuffer_at(x, y)) {
-    // Escalamos U y V al tamaño de la textura.
-    int text_x = abs((int)(interpolated_u * texture_width)) % texture_width;
-    int text_y = abs((int)(interpolated_v * texture_height)) % texture_height;
-
-    draw_pixel(x, y, texture[(texture_width * text_y) + text_x]);
+    uint32_t *texture_buffer = (uint32_t *)upng_get_buffer(texture);
+    draw_pixel(x, y, texture_buffer[(texture_width * text_y) + text_x]);
     update_zbuffer_at(x, y, interpolated_reciprocal_w);
   }
 }
@@ -148,42 +151,10 @@ void draw_filled_triangle(int x0, int y0, float z0, float w0, int x1, int y1,
     }
   }
 }
-
-// void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
-//                           uint32_t color) {
-//   // Necesitamos los vertices ordenados en el eje vertical.
-//   // y0 < y1 < y2
-//   if (y0 > y1) {
-//     swap_int(&y0, &y1);
-//     swap_int(&x0, &x1);
-//   }
-//   if (y1 > y2) {
-//     swap_int(&y1, &y2);
-//     swap_int(&x1, &x2);
-//   }
-//   if (y0 > y1) {
-//     swap_int(&y0, &y1);
-//     swap_int(&x0, &x1);
-//   }
-//   if (y1 == y2) {
-//     fill_flat_bottom_triangle(x0, y0, x1, y1, x2, y2, color);
-//   } else if (y0 == y1) {
-//     fill_flat_top_triangle(x0, y0, x1, y1, x2, y2, color);
-//   } else {
-//
-//     int my = y1;
-//     // int mx = ((float)((x2 - x0) * (y1 - y0)) / (float)(y2 - y0)) + x0;
-//     float alpha = (float)(y1 - y0) / (float)(y2 - y0);
-//     float mx = x0 + (x2 - x0) * alpha;
-//     fill_flat_bottom_triangle(x0, y0, x1, y1, mx, my, color);
-//     fill_flat_top_triangle(x1, y1, mx, my, x2, y2, color);
-//   }
-// }
-//
 void draw_textured_triangle(int x0, int y0, float z0, float w0, float u0,
                             float v0, int x1, int y1, float z1, float w1,
                             float u1, float v1, int x2, int y2, float z2,
-                            float w2, float u2, float v2, uint32_t *texture) {
+                            float w2, float u2, float v2, upng_t *texture) {
   // Necesitamos los vertices ordenados en el eje vertical.
   // y0 < y1 < y2
   if (y0 > y1) {
@@ -245,7 +216,8 @@ void draw_textured_triangle(int x0, int y0, float z0, float w0, float u0,
         // draw_pixel(x, y, (x % 2 == 0 && y % 2 == 0) ? 0xFFFF00FF :
         // 0xFF000000);
 
-        draw_texel(x, y, point_a, point_b, point_c, a_uv, b_uv, c_uv, texture);
+        draw_triangle_texel(x, y, point_a, point_b, point_c, a_uv, b_uv, c_uv,
+                            texture);
       }
     }
   }
@@ -269,9 +241,8 @@ void draw_textured_triangle(int x0, int y0, float z0, float w0, float u0,
         swap_int(&x_start, &x_end);
       }
       for (int x = x_start; x < x_end; x++) {
-        draw_texel(x, y, point_a, point_b, point_c, a_uv, b_uv, c_uv, texture);
-        // draw_pixel(x, y, (x % 2 == 0 && y % 2 == 0) ? 0xFFFF00FF :
-        // 0xFF000000);
+        draw_triangle_texel(x, y, point_a, point_b, point_c, a_uv, b_uv, c_uv,
+                            texture);
       }
     }
   }
@@ -344,4 +315,22 @@ vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p) {
 
   vec3_t result = {alpha, beta, gamma};
   return result;
+}
+
+vec3_t get_triangle_normal(vec4_t vertices[3]) {
+  vec3_t vector_a = vec3_from_vec4(vertices[0]);
+  vec3_t vector_b = vec3_from_vec4(vertices[1]);
+  vec3_t vector_c = vec3_from_vec4(vertices[2]);
+
+  // Sacamos la direccion de dos vectores con mismo origen de la cara.
+  vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+  vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+  vec3_normalize(&vector_ab);
+  vec3_normalize(&vector_ac);
+  // El CrossProduct the dos vectores nos da un tercer vector
+  // perpendicular a estos, o la normal de la cara formada por dichos
+  // vectores.
+  vec3_t normal = vec3_cross(vector_ab, vector_ac);
+  vec3_normalize(&normal);
+  return normal;
 }

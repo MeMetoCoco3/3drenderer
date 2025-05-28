@@ -42,11 +42,7 @@ bool should_render_filled_triangles(void);
 bool should_render_textured_triangles(void);
 bool should_render_vertex(void);
 bool should_render_wireframe(void);
-void setup(void);
-void get_input(void);
-void update(void);
-void render_color_buffer(void);
-void render(void);
+
 void destroy_window(void);
 void clear_color_buffer(uint32_t color);
 void clear_z_buffer(void);
