@@ -182,6 +182,7 @@ void render_color_buffer(void) {
   SDL_RenderCopy(renderer, color_buffer_texture, NULL, NULL);
   SDL_RenderPresent(renderer);
 }
+
 void clear_color_buffer(uint32_t color) {
   for (int i = 0; i < window_height * window_width; i++) {
     color_buffer[i] = color;

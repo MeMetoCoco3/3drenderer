@@ -1,7 +1,7 @@
 ## TODO: 
 1. Smooth shading. (Gouraud Shading / Phong Shading)
 ***2. Corregir sistema de coordenadas.***
-
+3. Other ways to traverse the triangles when filling.
 
 ### Como crear:
 ------
